@@ -127,6 +127,42 @@ body{display:flex;flex-direction:column;height:100dvh}
 .nub.due{background:rgba(245,200,66,.12);color:var(--gold);border-color:rgba(245,200,66,.25)}
 
 .list-toggle{font-size:11px;color:var(--muted);cursor:pointer;padding:3px}
+
+/* ── PWA INSTALL OVERLAY ── */
+.pwa-overlay{
+  position:fixed;inset:0;z-index:200;
+  background:rgba(0,0,0,.85);backdrop-filter:blur(12px);
+  display:flex;align-items:flex-end;justify-content:center;
+  animation:fadeIn .4s ease;
+}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+.pwa-sheet{
+  width:100%;max-width:480px;
+  background:#16161A;
+  border-radius:28px 28px 0 0;
+  padding:10px 24px 40px;
+  padding-bottom:max(env(safe-area-inset-bottom,0px),40px);
+  animation:slideUp .4s cubic-bezier(.34,1.2,.64,1);
+}
+@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.pwa-bar{width:36px;height:4px;background:#2A2A35;border-radius:99px;margin:0 auto 20px}
+.pwa-icon{width:72px;height:72px;border-radius:18px;background:linear-gradient(135deg,#7B6EF6,#5B54D4);display:flex;align-items:center;justify-content:center;margin:0 auto 14px;font-size:32px;box-shadow:0 8px 24px rgba(123,110,246,.4)}
+.pwa-title{font-size:20px;font-weight:700;text-align:center;color:#F2F1FF;margin-bottom:6px}
+.pwa-sub{font-size:14px;color:#6E6D85;text-align:center;line-height:1.6;margin-bottom:24px}
+.pwa-steps{display:flex;flex-direction:column;gap:12px;margin-bottom:28px}
+.pwa-step{display:flex;align-items:center;gap:14px;background:#1E1E24;border-radius:14px;padding:13px 16px}
+.pwa-num{width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#7B6EF6,#5B54D4);color:#fff;font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.pwa-step-text{font-size:14px;color:#F2F1FF;line-height:1.5}
+.pwa-step-text b{color:#7B6EF6}
+.pwa-step-text small{display:block;color:#6E6D85;font-size:12px;margin-top:2px}
+.pwa-step-icon{margin-left:auto;font-size:22px;flex-shrink:0}
+.pwa-btn-row{display:flex;gap:10px}
+.pwa-btn-ok{flex:2;height:52px;border-radius:14px;background:linear-gradient(135deg,#7B6EF6,#5B54D4);color:#fff;font-size:16px;font-weight:700;border:none;cursor:pointer;font-family:inherit;letter-spacing:.01em;box-shadow:0 4px 16px rgba(123,110,246,.4)}
+.pwa-btn-ok:active{transform:scale(.97)}
+.pwa-btn-skip{flex:1;height:52px;border-radius:14px;background:transparent;color:#6E6D85;font-size:14px;font-weight:500;border:1px solid #252535;cursor:pointer;font-family:inherit}
+.pwa-btn-skip:active{background:#1E1E24}
+.pwa-arrow{display:inline-block;animation:bounce .8s infinite alternate}
+@keyframes bounce{from{transform:translateY(0)}to{transform:translateY(4px)}}
 </style>
 </head>
 <body>
@@ -206,6 +242,46 @@ body{display:flex;flex-direction:column;height:100dvh}
     <div class="pbar2"></div>
     <div class="ptitle" id="ptitle">전체 문제 목록 (500문제)</div>
     <div class="ngrid" id="ngrid"></div>
+  </div>
+</div>
+
+<!-- PWA INSTALL OVERLAY -->
+<div class="pwa-overlay" id="pwa-overlay" style="display:none">
+  <div class="pwa-sheet">
+    <div class="pwa-bar"></div>
+    <div class="pwa-icon">📚</div>
+    <div class="pwa-title">홈 화면에 추가하기</div>
+    <div class="pwa-sub">아이콘을 추가하면 앱처럼<br>언제든지 바로 열 수 있어요!</div>
+    <div class="pwa-steps">
+      <div class="pwa-step">
+        <div class="pwa-num">1</div>
+        <div class="pwa-step-text">
+          하단 <b>공유 버튼</b>을 탭하세요
+          <small>Safari 주소창 아래 가운데 아이콘</small>
+        </div>
+        <div class="pwa-step-icon">⬆️</div>
+      </div>
+      <div class="pwa-step">
+        <div class="pwa-num">2</div>
+        <div class="pwa-step-text">
+          <b>홈 화면에 추가</b>를 탭하세요
+          <small>메뉴를 아래로 스크롤하면 보여요</small>
+        </div>
+        <div class="pwa-step-icon">➕</div>
+      </div>
+      <div class="pwa-step">
+        <div class="pwa-num">3</div>
+        <div class="pwa-step-text">
+          오른쪽 위 <b>추가</b>를 탭하세요
+          <small>이름은 그대로 두셔도 돼요</small>
+        </div>
+        <div class="pwa-step-icon">✅</div>
+      </div>
+    </div>
+    <div class="pwa-btn-row">
+      <button class="pwa-btn-skip" onclick="closePwa()">나중에</button>
+      <button class="pwa-btn-ok" onclick="closePwa()">알겠어요!</button>
+    </div>
   </div>
 </div>
 
@@ -1172,12 +1248,39 @@ function initNotif(){
 }
 
 /* ================================================================
+   PWA INSTALL PROMPT
+================================================================ */
+function showPwaPrompt(){
+  // iOS Safari 여부 확인
+  const isIos=/iphone|ipad|ipod/i.test(navigator.userAgent);
+  const isSafari=/safari/i.test(navigator.userAgent)&&!/chrome|crios|fxios/i.test(navigator.userAgent);
+  const isStandalone=window.navigator.standalone===true;
+  const dismissed=localStorage.getItem('pwa_dismissed');
+  const installCount=parseInt(localStorage.getItem('pwa_visit')||'0');
+
+  // 카운트 증가
+  localStorage.setItem('pwa_visit', installCount+1);
+
+  // 조건: iOS Safari, 홈화면 아님, 3회 이하 표시, 거절 안 함
+  if(isIos && isSafari && !isStandalone && !dismissed && installCount < 3){
+    setTimeout(()=>{
+      document.getElementById('pwa-overlay').style.display='flex';
+    }, 1500);
+  }
+}
+function closePwa(){
+  document.getElementById('pwa-overlay').style.display='none';
+  localStorage.setItem('pwa_dismissed','1');
+}
+
+/* ================================================================
    INIT
 ================================================================ */
 buildViewList();
 initRec();
 render();
 initNotif();
+showPwaPrompt();
 setTimeout(()=>{if(window.speechSynthesis){const u=new SpeechSynthesisUtterance('');speechSynthesis.speak(u);speechSynthesis.cancel();}},500);
 </script>
 </body>
