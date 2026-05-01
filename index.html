@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<title>기본동사 영작퀴즈</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{
+  --bg:#0A0A12;--card:#14141E;--border:#252535;
+  --accent:#7B6EF6;--accent-dim:rgba(123,110,246,.15);
+  --gold:#F5C842;--text:#F2F1FF;--muted:#6E6D85;
+  --success:#3EC98A;--danger:#F05C6E;--partial:#F5C842;
+  --mic-size:88px;
+}
+html,body{height:100%;overflow:hidden}
+body{background:var(--bg);color:var(--text);font-family:'Noto Sans KR',sans-serif;display:flex;flex-direction:column;height:100dvh;user-select:none;}
+
+/* TOP BAR */
+.topbar{padding:env(safe-area-inset-top,16px) 20px 10px;padding-top:max(env(safe-area-inset-top),16px);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
+.q-counter{font-size:13px;font-weight:500;color:var(--muted)}
+.score-pill{font-size:12px;font-weight:700;color:var(--accent);background:var(--accent-dim);border-radius:99px;padding:4px 12px}
+.prog-bar{height:3px;background:var(--border);flex-shrink:0}
+.prog-fill{height:3px;background:linear-gradient(90deg,var(--accent),var(--gold));transition:width .5s cubic-bezier(.4,0,.2,1)}
+
+/* MAIN */
+.main{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:16px 20px 0;display:flex;flex-direction:column;gap:12px}
+
+/* HINT TAG */
+.hint-tag{display:inline-flex;align-items:center;gap:6px;align-self:flex-start;font-size:11px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--accent);background:var(--accent-dim);border:1px solid rgba(123,110,246,.3);border-radius:99px;padding:5px 13px;}
+.ptag-dot{width:5px;height:5px;border-radius:50%;background:var(--accent);animation:blink 2s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.25}}
+
+/* KOREAN CARD */
+.kor-card{background:var(--card);border:1px solid var(--border);border-radius:22px;padding:20px 20px 16px;}
+.kor-label{font-size:11px;font-weight:700;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;margin-bottom:9px}
+.kor-text{font-size:21px;font-weight:700;line-height:1.6;color:var(--text);margin-bottom:14px}
+.listen-btn{display:flex;align-items:center;gap:7px;font-size:13px;font-weight:500;color:var(--muted);background:transparent;border:1px solid var(--border);border-radius:10px;padding:8px 14px;cursor:pointer;transition:all .2s;width:fit-content;}
+.listen-btn:active{background:var(--border);transform:scale(.97)}
+.listen-btn.speaking{color:var(--gold);border-color:var(--gold)}
+
+/* ANSWER CARD */
+.answer-card{background:var(--card);border:1px solid var(--border);border-radius:22px;padding:16px 20px;min-height:80px;display:flex;flex-direction:column;gap:7px;}
+.ans-label{font-size:11px;font-weight:700;color:var(--muted);letter-spacing:.1em;text-transform:uppercase}
+.ans-transcript{font-size:17px;font-weight:400;color:var(--text);line-height:1.6;min-height:36px;word-break:break-word;}
+.ans-transcript.placeholder{color:var(--muted);font-size:15px;font-weight:400}
+.interim{color:rgba(242,241,255,.4);font-style:italic}
+
+/* FEEDBACK */
+.feedback-card{border-radius:18px;padding:15px 18px;animation:popIn .3s cubic-bezier(.34,1.56,.64,1);display:none;}
+@keyframes popIn{from{opacity:0;transform:scale(.95)}to{opacity:1;transform:scale(1)}}
+.feedback-card.correct{background:rgba(62,201,138,.1);border:1px solid rgba(62,201,138,.25)}
+.feedback-card.partial{background:rgba(245,200,66,.08);border:1px solid rgba(245,200,66,.25)}
+.feedback-card.incorrect{background:rgba(240,92,110,.1);border:1px solid rgba(240,92,110,.25)}
+.feedback-card.neutral{background:var(--card);border:1px solid var(--border)}
+.fb-header{display:flex;align-items:center;gap:8px;margin-bottom:9px}
+.fb-icon{font-size:17px}
+.fb-verdict{font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase}
+.feedback-card.correct .fb-verdict{color:var(--success)}
+.feedback-card.partial .fb-verdict{color:var(--partial)}
+.feedback-card.incorrect .fb-verdict{color:var(--danger)}
+.feedback-card.neutral .fb-verdict{color:var(--muted)}
+.fb-model{font-size:15px;font-weight:600;color:var(--text);line-height:1.6;margin-bottom:5px}
+.fb-comment{font-size:13px;color:var(--muted);line-height:1.6}
+.loading-row{display:flex;gap:5px;align-items:center;padding:4px 0}
+.ld{width:6px;height:6px;border-radius:50%;background:var(--muted);animation:ldp 1.1s infinite}
+.ld:nth-child(2){animation-delay:.18s}.ld:nth-child(3){animation-delay:.36s}
+@keyframes ldp{0%,80%,100%{opacity:.2}40%{opacity:1}}
+
+/* BOTTOM */
+.bottom{flex-shrink:0;padding:14px 24px;padding-bottom:max(env(safe-area-inset-bottom),20px);background:linear-gradient(to top,var(--bg) 80%,transparent);display:flex;flex-direction:column;align-items:center;gap:14px}
+
+/* MIC */
+.mic-wrap{display:flex;flex-direction:column;align-items:center;gap:7px}
+.mic-ring{width:var(--mic-size);height:var(--mic-size);border-radius:50%;display:flex;align-items:center;justify-content:center;background:rgba(123,110,246,.12);border:2px solid rgba(123,110,246,.3);transition:all .2s;cursor:pointer;position:relative;}
+.mic-ring:active{transform:scale(.94)}
+.mic-ring.recording{background:rgba(240,92,110,.15);border-color:var(--danger);animation:mic-pulse 1s infinite}
+.mic-ring.recording .mic-inner{background:var(--danger)}
+@keyframes mic-pulse{0%,100%{box-shadow:0 0 0 0 rgba(240,92,110,.35)}50%{box-shadow:0 0 0 14px rgba(240,92,110,0)}}
+.mic-inner{width:60px;height:60px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;transition:background .2s;}
+.mic-label{font-size:12px;font-weight:500;color:var(--muted)}
+.mic-label.active{color:var(--danger)}
+
+/* NAV */
+.nav-row{display:flex;gap:10px;width:100%}
+.nav-btn{flex:1;height:50px;border-radius:14px;font-family:'Noto Sans KR',sans-serif;font-size:15px;font-weight:600;cursor:pointer;border:none;transition:all .2s;}
+.btn-next{background:var(--accent);color:#fff}
+.btn-next:active{background:#5a50d4;transform:scale(.97)}
+.btn-show{background:var(--card);color:var(--muted);border:1px solid var(--border)}
+.btn-show:active{background:var(--border);transform:scale(.97)}
+
+.num-toggle{font-size:12px;font-weight:500;color:var(--muted);cursor:pointer;padding:4px 0}
+
+/* NUM PANEL */
+.num-panel{position:fixed;inset:0;background:rgba(0,0,0,.72);backdrop-filter:blur(8px);z-index:100;display:none;align-items:flex-end;}
+.num-panel.open{display:flex}
+.num-sheet{width:100%;background:var(--card);border-radius:24px 24px 0 0;padding:16px 20px;padding-bottom:max(env(safe-area-inset-bottom),20px);max-height:60dvh;overflow-y:auto;}
+.num-sheet-bar{width:36px;height:4px;background:var(--border);border-radius:99px;margin:0 auto 14px}
+.num-sheet-title{font-size:13px;font-weight:700;color:var(--muted);margin-bottom:12px;letter-spacing:.05em;text-transform:uppercase}
+.num-grid{display:flex;flex-wrap:wrap;gap:6px}
+.nub{width:38px;height:34px;border-radius:9px;font-size:12px;font-weight:600;border:1px solid var(--border);background:transparent;color:var(--muted);cursor:pointer;display:flex;align-items:center;justify-content:center;}
+.nub.cur{background:var(--accent);color:#fff;border-color:var(--accent)}
+.nub.seen{background:rgba(123,110,246,.12);color:rgba(123,110,246,.8);border-color:rgba(123,110,246,.2)}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <span class="q-counter" id="q-counter">1 / 50</span>
+  <span class="score-pill" id="score-pill">완료 0</span>
+</div>
+<div class="prog-bar"><div class="prog-fill" id="prog-fill" style="width:2%"></div></div>
+
+<div class="main" id="main">
+  <div class="hint-tag"><span class="ptag-dot"></span><span id="hint-text">힌트</span></div>
+
+  <div class="kor-card">
+    <div class="kor-label">한국어 문장</div>
+    <div class="kor-text" id="kor-text"></div>
+    <button class="listen-btn" id="listen-btn" onclick="speakKorean()">
+      <span>🔊</span><span id="listen-label">한국어 듣기</span>
+    </button>
+  </div>
+
+  <div class="answer-card">
+    <div class="ans-label">내 영작</div>
+    <div class="ans-transcript placeholder" id="transcript">마이크 버튼을 눌러 영어로 말하세요</div>
+  </div>
+
+  <div class="feedback-card" id="feedback">
+    <div class="fb-header"><span class="fb-icon" id="fb-icon"></span><span class="fb-verdict" id="fb-verdict"></span></div>
+    <div class="fb-model" id="fb-model"></div>
+    <div class="fb-comment" id="fb-comment"></div>
+  </div>
+</div>
+
+<div class="bottom">
+  <div class="mic-wrap">
+    <div class="mic-ring" id="mic-ring" onclick="toggleMic()">
+      <div class="mic-inner">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
+          <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+          <line x1="12" y1="19" x2="12" y2="23"/>
+          <line x1="8" y1="23" x2="16" y2="23"/>
+        </svg>
+      </div>
+    </div>
+    <span class="mic-label" id="mic-label">탭하여 녹음</span>
+  </div>
+
+  <div class="nav-row">
+    <button class="nav-btn btn-show" onclick="showAnswer()">정답 보기</button>
+    <button class="nav-btn btn-next" onclick="go(cur+1)">다음 →</button>
+  </div>
+  <span class="num-toggle" onclick="openNumPanel()">문제 목록 보기</span>
+</div>
+
+<div class="num-panel" id="num-panel" onclick="closeNumPanel(event)">
+  <div class="num-sheet">
+    <div class="num-sheet-bar"></div>
+    <div class="num-sheet-title">전체 문제 목록</div>
+    <div class="num-grid" id="num-grid"></div>
+  </div>
+</div>
+
+<script>
+const data = [
+  /* ── HAVE : 소유/관계 ── */
+  {k:"반려동물 키우시나요?",           e:"Do you have any pets?",                                          h:"HAVE · 소유/관계"},
+  {k:"내 조카는 거북이를 키운다.",        e:"My nephew has a turtle.",                                        h:"HAVE · 소유/관계"},
+  {k:"내 생각은 달랐다.",              e:"I had a different idea.",                                         h:"HAVE · 소유/관계"},
+  {k:"프로젝트가 끝나서 좋죠?",          e:"Are you glad the project is over?",                              h:"HAVE · 소유/관계"},
+  {k:"음악을 하지 않은 걸 후회해?",       e:"Do you have any regrets about not pursuing music?",             h:"HAVE · 소유/관계"},
+
+  /* ── HAVE : 식사/경험 ── */
+  {k:"방금 간식을 먹었더니 배가 별로 안 고파요.", e:"I just had a snack so I'm not that hungry.",            h:"HAVE · 식사/경험"},
+  {k:"저는 스테이크 먹을게요.",           e:"I'll have the steak, please.",                                   h:"HAVE · 식사/경험"},
+  {k:"출발하기 전에 뭐라도 먹어야 해.",    e:"You should have something before you leave.",                    h:"HAVE · 식사/경험"},
+  {k:"점심은 주로 몇 시에 먹어요?",       e:"What time do you usually have lunch?",                           h:"HAVE · 식사/경험"},
+  {k:"그 영화를 대형 화면으로 봤어.",      e:"I saw the movie on the big screen.",                             h:"HAVE · 식사/경험"},
+
+  /* ── HAVE : 시간/상태 ── */
+  {k:"어제 아침에는 별일이 다 있었어요.",   e:"I had a weird morning yesterday.",                               h:"HAVE · 시간/상태"},
+  {k:"유년 시절을 힘들게 보냈다.",         e:"I had a rough childhood.",                                       h:"HAVE · 시간/상태"},
+  {k:"접속 상태가 안 좋은 것 같습니다.",    e:"I think I have a bad connection.",                               h:"HAVE · 시간/상태"},
+  {k:"한 주 동안 마음이 좀 힘들었거든.",    e:"I had a rough week emotionally.",                                h:"HAVE · 시간/상태"},
+  {k:"그 두 사람 사이가 완전히 틀어졌대.",   e:"Those two had a major falling out.",                             h:"HAVE · 시간/상태"},
+
+  /* ── HAVE : 행사/기회 ── */
+  {k:"삼성이 오늘 신제품 출시 행사를 열어요.",  e:"Samsung is having a new product launch today.",              h:"HAVE · 행사/기회"},
+  {k:"백화점들이 이번 주에 일제히 세일을 한다.", e:"Department stores are all having sales this week.",          h:"HAVE · 행사/기회"},
+  {k:"이번 주말에 모임이 있으니 오고 싶으면 오렴.", e:"I'm having a get-together this weekend if you want to join.", h:"HAVE · 행사/기회"},
+  {k:"샘소나이트 여행 가방 세일 중이야.",     e:"Costco is having a sale on luggage right now.",                  h:"HAVE · 행사/기회"},
+  {k:"저녁은 먹은 거지?",                e:"Did you eat dinner yet?",                                         h:"HAVE · 행사/기회"},
+
+  /* ── HAVE : 할 일/책무 ── */
+  {k:"오후에는 집안일을 좀 해야 해요.",      e:"I have some chores to do in the afternoon.",                     h:"HAVE · 할 일/책무"},
+  {k:"할 일이 산더미 같이 쌓여 있다.",       e:"I have tons of work to do.",                                     h:"HAVE · 할 일/책무"},
+  {k:"답장해야 할 이메일이 몇 개 있다.",      e:"I have a few emails to reply to.",                               h:"HAVE · 할 일/책무"},
+  {k:"오늘 오후에 몇 가지 볼 일이 좀 있다.",  e:"I have some errands to run this afternoon.",                     h:"HAVE · 할 일/책무"},
+  {k:"뭐 좀 처리할 게 있었어요.",           e:"I had something to take care of.",                               h:"HAVE · 할 일/책무"},
+
+  /* ── HAVE : 특징/속성 ── */
+  {k:"이 컵은 손잡이가 독특하다.",          e:"This cup has a unique handle.",                                  h:"HAVE · 특징/속성"},
+  {k:"이 바지는 주머니가 없다.",            e:"These pants don't have pockets.",                                h:"HAVE · 특징/속성"},
+  {k:"그 사람은 성격이 참 좋아요.",          e:"He has a great personality.",                                    h:"HAVE · 특징/속성"},
+  {k:"당신은 목소리가 좋군요.",             e:"You have a good voice.",                                         h:"HAVE · 특징/속성"},
+  {k:"그들은 각자 장단점이 있네.",           e:"They both have pros and cons.",                                  h:"HAVE · 특징/속성"},
+
+  /* ── HAVE : 초대/곁에 둠 ── */
+  {k:"우리를 저녁 식사에 불러줘서 고마워요.", e:"Thank you for having us over for dinner.",                       h:"HAVE · 초대/곁에 둠"},
+  {k:"현금 좀 있니?",                    e:"Do you have any cash on you?",                                    h:"HAVE · 초대/곁에 둠"},
+  {k:"식사에 누구를 부를 거니?",            e:"Who are you having over for dinner?",                            h:"HAVE · 초대/곁에 둠"},
+  {k:"그녀를 두어 번 만났다.",              e:"I've met her a couple of times.",                                h:"HAVE · 초대/곁에 둠"},
+  {k:"이거 마무리하려면 몇 분 더 필요해.",    e:"I need a few minutes to finish this.",                           h:"HAVE · 초대/곁에 둠"},
+
+  /* ── HAVE : 지시/요청 ── */
+  {k:"남편한테 역 근처에서 만나라고 할게요.", e:"I'll have my husband meet you at the station.",                  h:"HAVE · 지시/요청"},
+  {k:"비서한테 다시 전화드리라고 해 둘게요.", e:"I'll have my secretary get back to you.",                        h:"HAVE · 지시/요청"},
+  {k:"그분한테 내 사무실로 들르라고 해요.",   e:"Have him stop by my office.",                                    h:"HAVE · 지시/요청"},
+  {k:"신분증 좀 볼 수 있을까요?",           e:"May I see your ID?",                                             h:"HAVE · 지시/요청"},
+  {k:"로비에서 기다려 주시겠어요?",          e:"May I ask you to take a seat in the lobby, please?",             h:"HAVE · 지시/요청"},
+
+  /* ── GET : 획득/구매 ── */
+  {k:"남자친구가 콘서트 표를 구했어요.",      e:"My boyfriend got a ticket to the concert.",                      h:"GET · 획득/구매"},
+  {k:"이 신발 이탈리아에서 구했어.",          e:"I got these shoes from Italy.",                                  h:"GET · 획득/구매"},
+  {k:"주변에서 커피 살 수 있는 곳이 어딘가요?", e:"Where can I get a coffee around here?",                        h:"GET · 획득/구매"},
+  {k:"이 명품 가방은 어떻게 구한 거야?",      e:"How did you get this designer bag?",                             h:"GET · 획득/구매"},
+  {k:"성수동 집세가 우리 동네보다 훨씬 비싸다.", e:"Rent in Seongsu-dong is three times as much as in my neighborhood.", h:"GET · 획득/구매"},
+
+  /* ── GET : 확보/예약 ── */
+  {k:"거기 자리 잡으려면 엄청 미리 예약해야 해요.", e:"You have to book way in advance to get a table there.",    h:"GET · 확보/예약"},
+  {k:"무대 가까운 자리를 못 구했어.",         e:"We couldn't get a spot near the stage.",                         h:"GET · 확보/예약"},
+  {k:"그 로펌에서 면접 보게 된 거지?",        e:"Did you get an interview at that law firm yet?",                  h:"GET · 확보/예약"},
+  {k:"테일러 스위프트 콘서트 표 구했어?",      e:"Did you get tickets to the Taylor Swift concert?",               h:"GET · 확보/예약"},
+  {k:"몇 분 만에 매진되었어.",              e:"They sold out in minutes.",                                       h:"GET · 확보/예약"},
+];
+
+let cur=0, seen=new Set(), recognition=null, isRecording=false, finalText='';
+
+/* ── TTS ── */
+function speakKorean(){
+  if(!window.speechSynthesis)return;
+  speechSynthesis.cancel();
+  const utt=new SpeechSynthesisUtterance(data[cur].k);
+  utt.lang='ko-KR'; utt.rate=0.88;
+  const btn=document.getElementById('listen-btn');
+  const lbl=document.getElementById('listen-label');
+  btn.classList.add('speaking'); lbl.textContent='재생 중...';
+  utt.onend=()=>{btn.classList.remove('speaking');lbl.textContent='한국어 듣기'};
+  utt.onerror=()=>{btn.classList.remove('speaking');lbl.textContent='한국어 듣기'};
+  speechSynthesis.speak(utt);
+}
+function speakEnglish(text){
+  if(!window.speechSynthesis)return;
+  speechSynthesis.cancel();
+  const utt=new SpeechSynthesisUtterance(text);
+  utt.lang='en-US'; utt.rate=0.88;
+  speechSynthesis.speak(utt);
+}
+
+/* ── SPEECH RECOGNITION ── */
+function initSpeech(){
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!SR){
+    document.getElementById('mic-label').textContent='음성인식 미지원 (Safari 확인)';
+    return;
+  }
+  recognition=new SR();
+  recognition.lang='en-US';
+  recognition.continuous=false;
+  recognition.interimResults=true;
+  recognition.onresult=e=>{
+    let interim='',final='';
+    for(let i=0;i<e.results.length;i++){
+      if(e.results[i].isFinal) final+=e.results[i][0].transcript;
+      else interim+=e.results[i][0].transcript;
+    }
+    finalText=final||finalText;
+    const el=document.getElementById('transcript');
+    el.className='ans-transcript';
+    el.innerHTML=(finalText||'')+(interim?`<span class="interim"> ${interim}</span>`:'');
+    if(!finalText&&!interim){el.className='ans-transcript placeholder';el.textContent='마이크 버튼을 눌러 영어로 말하세요';}
+  };
+  recognition.onend=()=>{
+    isRecording=false;
+    document.getElementById('mic-ring').classList.remove('recording');
+    document.getElementById('mic-label').textContent='탭하여 녹음';
+    if(finalText) gradeAnswer(finalText);
+  };
+  recognition.onerror=e=>{
+    isRecording=false;
+    document.getElementById('mic-ring').classList.remove('recording');
+    if(e.error==='not-allowed'){
+      document.getElementById('mic-label').textContent='마이크 권한 필요 (설정에서 허용)';
+    } else {
+      document.getElementById('mic-label').textContent='탭하여 다시 시도';
+    }
+  };
+}
+
+function toggleMic(){
+  if(!recognition){alert('음성 인식이 지원되지 않습니다.\nSafari → 설정 → 마이크 허용 확인');return;}
+  if(isRecording){
+    recognition.stop();
+  } else {
+    finalText='';
+    document.getElementById('transcript').className='ans-transcript placeholder';
+    document.getElementById('transcript').textContent='듣고 있어요...';
+    document.getElementById('feedback').style.display='none';
+    recognition.start();
+    isRecording=true;
+    document.getElementById('mic-ring').classList.add('recording');
+    document.getElementById('mic-label').textContent='듣는 중 — 탭하여 완료';
+  }
+}
+
+/* ── AI GRADING ── */
+async function gradeAnswer(userAns){
+  const q=data[cur];
+  const fb=document.getElementById('feedback');
+  fb.className='feedback-card neutral';
+  fb.style.display='block';
+  document.getElementById('fb-icon').textContent='';
+  document.getElementById('fb-verdict').textContent='AI 채점 중';
+  document.getElementById('fb-model').innerHTML='<div class="loading-row"><div class="ld"></div><div class="ld"></div><div class="ld"></div></div>';
+  document.getElementById('fb-comment').textContent='';
+  scrollFeedback();
+  markSeen();
+  try{
+    const res=await fetch("https://api.anthropic.com/v1/messages",{
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({
+        model:"claude-sonnet-4-20250514",
+        max_tokens:500,
+        system:`You evaluate English translation answers for Korean learners. Topic: basic English verbs (HAVE, GET) in everyday contexts.
+Return ONLY valid JSON, no markdown:
+{"verdict":"correct"|"partial"|"incorrect","comment":"한국어 피드백 1~2문장","model":"${q.e.replace(/"/g,"'")}"}
+Rules:
+- correct: meaning & grammar right, minor wording differences OK
+- partial: mostly right but has a notable grammar error or awkward phrasing
+- incorrect: wrong meaning or structure`,
+        messages:[{role:"user",content:`Korean: ${q.k}\nContext: ${q.h}\nModel answer: ${q.e}\nStudent answer: ${userAns}`}]
+      })
+    });
+    const d=await res.json();
+    const raw=d.content.map(i=>i.text||'').join('').replace(/```json|```/g,'').trim();
+    const p=JSON.parse(raw);
+    const v=p.verdict;
+    fb.className='feedback-card '+v;
+    const icons={correct:'✦',partial:'◈',incorrect:'✕'};
+    const titles={correct:'정답!',partial:'거의 맞았어요!',incorrect:'다시 도전!'};
+    document.getElementById('fb-icon').textContent=icons[v]||'';
+    document.getElementById('fb-verdict').textContent=titles[v]||v;
+    document.getElementById('fb-model').textContent='모범: '+p.model;
+    document.getElementById('fb-comment').textContent=p.comment||'';
+    if(v==='correct') speakEnglish(p.model);
+  } catch {
+    fb.className='feedback-card neutral';
+    document.getElementById('fb-icon').textContent='◎';
+    document.getElementById('fb-verdict').textContent='모범 답안';
+    document.getElementById('fb-model').textContent=q.e;
+    document.getElementById('fb-comment').textContent=q.h;
+  }
+  scrollFeedback();
+}
+
+function showAnswer(){
+  const q=data[cur];
+  const fb=document.getElementById('feedback');
+  fb.className='feedback-card neutral';
+  fb.style.display='block';
+  document.getElementById('fb-icon').textContent='◎';
+  document.getElementById('fb-verdict').textContent='모범 답안';
+  document.getElementById('fb-model').textContent=q.e;
+  document.getElementById('fb-comment').textContent=q.h;
+  speakEnglish(q.e);
+  markSeen();
+  scrollFeedback();
+}
+
+function scrollFeedback(){
+  setTimeout(()=>{document.getElementById('feedback').scrollIntoView({behavior:'smooth',block:'nearest'});},120);
+}
+
+function markSeen(){
+  seen.add(cur);
+  document.getElementById('score-pill').textContent='완료 '+seen.size;
+  renderNums();
+}
+
+function render(){
+  const q=data[cur];
+  const total=data.length;
+  document.getElementById('q-counter').textContent=(cur+1)+' / '+total;
+  document.getElementById('prog-fill').style.width=((cur+1)/total*100)+'%';
+  document.getElementById('hint-text').textContent=q.h;
+  document.getElementById('kor-text').textContent=q.k;
+  document.getElementById('listen-btn').classList.remove('speaking');
+  document.getElementById('listen-label').textContent='한국어 듣기';
+  finalText='';
+  document.getElementById('transcript').className='ans-transcript placeholder';
+  document.getElementById('transcript').textContent='마이크 버튼을 눌러 영어로 말하세요';
+  document.getElementById('feedback').style.display='none';
+  document.getElementById('mic-ring').classList.remove('recording');
+  document.getElementById('mic-label').textContent='탭하여 녹음';
+  if(isRecording){try{recognition.stop();}catch(e){} isRecording=false;}
+  if(window.speechSynthesis) speechSynthesis.cancel();
+  document.getElementById('main').scrollTop=0;
+  renderNums();
+}
+
+function go(n){if(n<0||n>=data.length)return;cur=n;render();}
+
+function openNumPanel(){document.getElementById('num-panel').classList.add('open');}
+function closeNumPanel(e){if(e.target===document.getElementById('num-panel'))document.getElementById('num-panel').classList.remove('open');}
+
+function renderNums(){
+  const g=document.getElementById('num-grid');g.innerHTML='';
+  for(let i=0;i<data.length;i++){
+    const b=document.createElement('button');
+    b.className='nub'+(i===cur?' cur':seen.has(i)?' seen':'');
+    b.textContent=i+1;
+    b.onclick=(n=>()=>{go(n);document.getElementById('num-panel').classList.remove('open');})(i);
+    g.appendChild(b);
+  }
+}
+
+initSpeech();
+render();
+setTimeout(()=>{if(window.speechSynthesis){const d=new SpeechSynthesisUtterance('');speechSynthesis.speak(d);speechSynthesis.cancel();}},600);
+</script>
+</body>
+</html>
