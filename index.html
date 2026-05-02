@@ -128,6 +128,126 @@ body{display:flex;flex-direction:column;height:100dvh}
 
 .list-toggle{font-size:11px;color:var(--muted);cursor:pointer;padding:3px}
 
+/* ── VOICE PANEL ── */
+.voice-panel{position:fixed;inset:0;z-index:150;background:rgba(0,0,0,.75);backdrop-filter:blur(10px);display:none;align-items:flex-end}
+.voice-panel.open{display:flex}
+.voice-sheet{width:100%;background:#16161A;border-radius:26px 26px 0 0;padding:14px 20px;padding-bottom:max(env(safe-area-inset-bottom),24px);max-height:80dvh;display:flex;flex-direction:column}
+.voice-bar{width:34px;height:4px;background:#252535;border-radius:99px;margin:0 auto 16px}
+.voice-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
+.voice-title{font-size:17px;font-weight:700;color:#F2F1FF}
+.voice-close{width:30px;height:30px;border-radius:50%;background:#252535;border:none;color:#6E6D85;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.voice-sub{font-size:12px;color:#6E6D85;margin-bottom:16px;line-height:1.6}
+.voice-section-title{font-size:10px;font-weight:700;color:#6E6D85;letter-spacing:.1em;text-transform:uppercase;margin-bottom:8px}
+.voice-list{overflow-y:auto;flex:1;display:flex;flex-direction:column;gap:7px;padding-bottom:8px}
+.voice-item{display:flex;align-items:center;gap:12px;background:#1E1E24;border:1px solid #252535;border-radius:13px;padding:12px 14px;cursor:pointer;transition:all .2s}
+.voice-item:active{transform:scale(.98)}
+.voice-item.selected{background:rgba(123,110,246,.12);border-color:rgba(123,110,246,.4)}
+.voice-item.selected .vi-name{color:#7B6EF6}
+.voice-item.unavail{opacity:.4;cursor:default}
+.vi-emoji{font-size:20px;width:36px;height:36px;background:#252535;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.voice-item.selected .vi-emoji{background:rgba(123,110,246,.2)}
+.vi-info{flex:1}
+.vi-name{font-size:14px;font-weight:600;color:#F2F1FF;margin-bottom:2px}
+.vi-desc{font-size:11px;color:#6E6D85;line-height:1.4}
+.vi-right{display:flex;align-items:center;gap:8px}
+.vi-check{width:20px;height:20px;border-radius:50%;background:#7B6EF6;display:flex;align-items:center;justify-content:center;font-size:11px;color:#fff;display:none}
+.voice-item.selected .vi-check{display:flex}
+.vi-play{width:32px;height:32px;border-radius:50%;background:#252535;border:none;color:#6E6D85;font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.vi-play:active{background:#7B6EF6;color:#fff}
+.voice-tip{background:rgba(245,200,66,.08);border:1px solid rgba(245,200,66,.2);border-radius:12px;padding:12px 14px;margin-top:12px}
+.voice-tip-title{font-size:12px;font-weight:700;color:#F5C842;margin-bottom:4px}
+.voice-tip-text{font-size:12px;color:#6E6D85;line-height:1.6}
+.voice-speed{display:flex;align-items:center;gap:10px;background:#1E1E24;border-radius:13px;padding:13px 14px;margin-bottom:8px}
+.vs-label{font-size:13px;font-weight:600;color:#F2F1FF;flex-shrink:0}
+.vs-slider{flex:1;-webkit-appearance:none;appearance:none;height:4px;border-radius:99px;background:linear-gradient(90deg,#7B6EF6 var(--pct,60%),#252535 var(--pct,60%));outline:none}
+.vs-slider::-webkit-slider-thumb{-webkit-appearance:none;width:20px;height:20px;border-radius:50%;background:#7B6EF6;box-shadow:0 2px 8px rgba(123,110,246,.5)}
+.vs-val{font-size:13px;font-weight:700;color:#7B6EF6;width:32px;text-align:right;flex-shrink:0}
+
+/* 상단 음성 설정 버튼 */
+.voice-setting-btn{width:32px;height:32px;border-radius:50%;background:transparent;border:1px solid #252535;color:#6E6D85;font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s;flex-shrink:0}
+.voice-setting-btn:active{background:#252535}
+
+/* ── DB MANAGER PANEL ── */
+.db-panel{position:fixed;inset:0;z-index:160;background:#0A0A12;display:none;flex-direction:column}
+.db-panel.open{display:flex}
+.db-topbar{display:flex;align-items:center;gap:10px;padding:max(env(safe-area-inset-top),14px) 16px 12px;background:#16161A;border-bottom:1px solid #252535;flex-shrink:0}
+.db-title-main{font-size:17px;font-weight:700;color:#F2F1FF;flex:1}
+.db-close-btn{height:34px;padding:0 14px;background:transparent;border:1px solid #252535;border-radius:10px;color:#6E6D85;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit}
+.db-tabs-bar{display:flex;background:#16161A;border-bottom:1px solid #252535;flex-shrink:0}
+.db-tab-btn{flex:1;height:42px;font-size:13px;font-weight:600;color:#6E6D85;background:transparent;border:none;cursor:pointer;font-family:inherit;border-bottom:2px solid transparent;transition:all .2s}
+.db-tab-btn.active{color:#7B6EF6;border-bottom-color:#7B6EF6}
+.db-body{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:14px 16px;display:flex;flex-direction:column;gap:12px}
+
+/* SOURCE */
+.src-card{background:#1E1E24;border:1px solid #252535;border-radius:14px;padding:14px}
+.src-card-title{font-size:11px;font-weight:700;color:#6E6D85;letter-spacing:.08em;text-transform:uppercase;margin-bottom:10px}
+.src-options{display:flex;flex-direction:column;gap:8px}
+.src-opt{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:11px;background:#14141E;border:1px solid #252535;cursor:pointer;transition:all .2s}
+.src-opt.active{background:rgba(123,110,246,.1);border-color:rgba(123,110,246,.4)}
+.src-radio{width:18px;height:18px;border-radius:50%;border:2px solid #252535;flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all .2s}
+.src-opt.active .src-radio{border-color:#7B6EF6;background:#7B6EF6}
+.src-opt.active .src-radio::after{content:'✓';font-size:9px;color:#fff;font-weight:700}
+.src-opt-info{flex:1}
+.src-opt-name{font-size:14px;font-weight:600;color:#F2F1FF}
+.src-opt-desc{font-size:11px;color:#6E6D85;margin-top:2px}
+.src-count{font-size:11px;font-weight:700;color:#7B6EF6;background:rgba(123,110,246,.12);border-radius:99px;padding:2px 9px;flex-shrink:0}
+
+/* UPLOAD */
+.upload-card{background:#1E1E24;border:1px solid #252535;border-radius:14px;padding:14px}
+.upload-zone{border:2px dashed #252535;border-radius:12px;padding:28px 16px;text-align:center;cursor:pointer;position:relative;transition:all .2s}
+.upload-zone.drag{border-color:#7B6EF6;background:rgba(123,110,246,.07)}
+.upload-zone input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.uz-icon{font-size:36px;margin-bottom:8px}
+.uz-text{font-size:15px;font-weight:700;color:#F2F1FF;margin-bottom:4px}
+.uz-sub{font-size:12px;color:#6E6D85}
+.fmt-box{background:#14141E;border-radius:10px;padding:11px 13px;margin-top:10px}
+.fmt-title{font-size:11px;font-weight:700;color:#6E6D85;letter-spacing:.07em;text-transform:uppercase;margin-bottom:7px}
+.fmt-code{font-family:monospace;font-size:12px;color:#7B6EF6;line-height:1.8}
+.upload-btn-row{display:flex;gap:8px;margin-top:10px}
+.upl-btn{flex:1;height:40px;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .2s}
+.upl-dl{background:#1E1E24;color:#F2F1FF;border:1px solid #252535}
+.upl-dl:active{background:#252535}
+.upl-tmpl{background:rgba(123,110,246,.15);color:#7B6EF6;border:1px solid rgba(123,110,246,.3)}
+.upl-tmpl:active{background:rgba(123,110,246,.25)}
+
+/* TABLE */
+.tbl-toolbar{display:flex;gap:8px}
+.tbl-search{flex:1;height:40px;background:#1E1E24;border:1px solid #252535;border-radius:10px;color:#F2F1FF;font-size:13px;padding:0 12px;outline:none;font-family:inherit}
+.tbl-search::placeholder{color:#6E6D85}
+.tbl-search:focus{border-color:rgba(123,110,246,.5)}
+.tbl-add-btn{height:40px;padding:0 14px;background:#7B6EF6;color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit}
+.tbl-add-btn:active{background:#5B54D4}
+.tbl-stats{font-size:12px;color:#6E6D85}
+.tbl-list{display:flex;flex-direction:column;gap:7px;padding-bottom:20px}
+.tbl-item{background:#1E1E24;border:1px solid #252535;border-radius:12px;padding:11px 12px;display:flex;align-items:flex-start;gap:9px}
+.ti-num{font-size:11px;font-weight:700;color:#6E6D85;min-width:20px;padding-top:2px}
+.ti-body{flex:1;min-width:0}
+.ti-ko{font-size:13px;font-weight:600;color:#F2F1FF;margin-bottom:2px;word-break:break-word}
+.ti-en{font-size:12px;color:#7B6EF6;margin-bottom:2px;word-break:break-word}
+.ti-hint{font-size:11px;color:#6E6D85}
+.ti-actions{display:flex;gap:4px;flex-shrink:0}
+.ti-btn{width:28px;height:28px;border-radius:7px;border:1px solid #252535;background:transparent;color:#6E6D85;font-size:12px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.ti-btn:active{transform:scale(.9)}
+
+/* EDIT MODAL */
+.edit-modal{position:fixed;inset:0;z-index:210;background:rgba(0,0,0,.85);backdrop-filter:blur(10px);display:none;align-items:flex-end;padding:0}
+.edit-modal.open{display:flex}
+.edit-box{background:#16161A;border-radius:24px 24px 0 0;padding:18px 18px;padding-bottom:max(env(safe-area-inset-bottom),20px);width:100%;display:flex;flex-direction:column;gap:11px}
+.edit-box-title{font-size:16px;font-weight:700;color:#F2F1FF}
+.edit-field{display:flex;flex-direction:column;gap:4px}
+.edit-lbl{font-size:10px;font-weight:700;color:#6E6D85;letter-spacing:.08em;text-transform:uppercase}
+.edit-inp{background:#1E1E24;border:1px solid #252535;border-radius:10px;color:#F2F1FF;font-size:14px;padding:10px 12px;outline:none;font-family:inherit;resize:none;line-height:1.5;width:100%}
+.edit-inp:focus{border-color:rgba(123,110,246,.5)}
+.edit-btns{display:flex;gap:8px}
+.e-cancel{flex:1;height:46px;border-radius:12px;background:transparent;color:#6E6D85;border:1px solid #252535;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit}
+.e-save{flex:2;height:46px;border-radius:12px;background:#7B6EF6;color:#fff;border:none;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit}
+.e-save:active{background:#5B54D4}
+
+/* DB 버튼 */
+.db-manage-btn{font-size:11px;color:#6E6D85;cursor:pointer;padding:4px 10px;border-radius:99px;border:1px solid #252535;background:transparent;font-family:inherit}
+.db-manage-btn:active{background:#252535}
+.bot-row2{display:flex;gap:10px;align-items:center;justify-content:center}
+
 /* ── PWA INSTALL OVERLAY ── */
 .pwa-overlay{
   position:fixed;inset:0;z-index:200;
@@ -173,6 +293,7 @@ body{display:flex;flex-direction:column;height:100dvh}
     <span class="pill pill-due" id="pill-due" style="display:none">복습 0</span>
     <span class="pill pill-ok" id="pill-ok">정답 0</span>
     <span class="pill pill-ng" id="pill-ng">오답 0</span>
+    <button class="voice-setting-btn" onclick="openVoicePanel()" title="음성 설정">🎙</button>
   </div>
 </div>
 <div class="pbar"><div class="pfill" id="pfill" style="width:0.2%"></div></div>
@@ -235,6 +356,9 @@ body{display:flex;flex-direction:column;height:100dvh}
   </div>
 
   <span class="list-toggle" onclick="openPanel()">문제 목록 보기</span>
+  <div class="bot-row2">
+    <button class="db-manage-btn" onclick="openDB()">📂 DB 관리</button>
+  </div>
 </div>
 
 <div class="panel" id="panel" onclick="if(event.target===this)closePanel()">
@@ -242,6 +366,145 @@ body{display:flex;flex-direction:column;height:100dvh}
     <div class="pbar2"></div>
     <div class="ptitle" id="ptitle">전체 문제 목록 (500문제)</div>
     <div class="ngrid" id="ngrid"></div>
+  </div>
+</div>
+
+<!-- DB MANAGER PANEL -->
+<div class="db-panel" id="db-panel">
+  <div class="db-topbar">
+    <div class="db-title-main">📂 DB 관리</div>
+    <button class="db-close-btn" onclick="closeDB()">닫기</button>
+  </div>
+  <div class="db-tabs-bar">
+    <button class="db-tab-btn active" id="dbtab-source" onclick="switchDBTab('source')">📚 출처 선택</button>
+    <button class="db-tab-btn" id="dbtab-upload" onclick="switchDBTab('upload')">⬆️ 업로드</button>
+    <button class="db-tab-btn" id="dbtab-edit" onclick="switchDBTab('edit')">✏️ 편집</button>
+  </div>
+  <div class="db-body" id="db-body-source">
+    <div class="src-card">
+      <div class="src-card-title">현재 학습 DB 선택</div>
+      <div class="src-options">
+        <div class="src-opt" id="src-builtin" onclick="selectSource('builtin')">
+          <div class="src-radio"></div>
+          <div class="src-opt-info">
+            <div class="src-opt-name">📖 기본 내장 DB</div>
+            <div class="src-opt-desc">기본동사 100 (HAVE·GET·MAKE 등)</div>
+          </div>
+          <span class="src-count" id="src-builtin-count">500문장</span>
+        </div>
+        <div class="src-opt" id="src-custom" onclick="selectSource('custom')" style="display:none">
+          <div class="src-radio"></div>
+          <div class="src-opt-info">
+            <div class="src-opt-name">📁 내 커스텀 DB</div>
+            <div class="src-opt-desc" id="src-custom-desc">업로드한 문장</div>
+          </div>
+          <span class="src-count" id="src-custom-count">0문장</span>
+        </div>
+      </div>
+    </div>
+
+    <div style="background:#1E1E24;border:1px solid #252535;border-radius:14px;padding:14px">
+      <div class="src-card-title">현재 학습 현황</div>
+      <div id="db-stats-view" style="font-size:13px;color:#6E6D85;line-height:2"></div>
+    </div>
+  </div>
+
+  <div class="db-body" id="db-body-upload" style="display:none">
+    <div class="upload-card">
+      <div class="upload-zone" id="upload-zone">
+        <input type="file" id="file-input" accept=".csv,.xlsx,.xls,.txt" onchange="handleFile(this.files[0])"/>
+        <div class="uz-icon">📄</div>
+        <div class="uz-text">파일을 탭하여 선택</div>
+        <div class="uz-sub">CSV · Excel(.xlsx) · TXT 지원</div>
+      </div>
+      <div class="fmt-box">
+        <div class="fmt-title">📋 파일 형식 (CSV 예시)</div>
+        <div class="fmt-code">한국어,영어,힌트
+반려동물 키우시나요?,Do you have any pets?,HAVE · 소유
+저는 스테이크 먹을게요.,I'll have the steak please.,HAVE · 식사</div>
+      </div>
+      <div class="upload-btn-row">
+        <button class="upl-btn upl-tmpl" onclick="downloadTemplate()">📥 템플릿 다운로드</button>
+        <button class="upl-btn upl-dl" onclick="downloadCurrentDB()">💾 현재 DB 내보내기</button>
+      </div>
+    </div>
+    <div id="upload-preview" style="display:none;background:#1E1E24;border:1px solid rgba(62,201,138,.3);border-radius:14px;padding:14px">
+      <div style="font-size:12px;font-weight:700;color:#3EC98A;margin-bottom:8px" id="upload-preview-title"></div>
+      <div id="upload-preview-list" style="display:flex;flex-direction:column;gap:6px;max-height:200px;overflow-y:auto"></div>
+      <div style="display:flex;gap:8px;margin-top:12px">
+        <button onclick="cancelUpload()" style="flex:1;height:42px;border-radius:10px;background:transparent;color:#6E6D85;border:1px solid #252535;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit">취소</button>
+        <button onclick="confirmUpload()" style="flex:2;height:42px;border-radius:10px;background:#3EC98A;color:#fff;border:none;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">✅ 이 DB로 학습하기</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="db-body" id="db-body-edit" style="display:none">
+    <div class="tbl-toolbar">
+      <input class="tbl-search" id="tbl-search" placeholder="한국어 / 영어 / 힌트 검색..." oninput="renderTable()"/>
+      <button class="tbl-add-btn" onclick="openEditModal(-1)">+ 추가</button>
+    </div>
+    <div class="tbl-stats" id="tbl-stats"></div>
+    <div class="tbl-list" id="tbl-list"></div>
+  </div>
+</div>
+
+<!-- EDIT MODAL -->
+<div class="edit-modal" id="edit-modal" onclick="if(event.target===this)closeEditModal()">
+  <div class="edit-box">
+    <div class="edit-box-title" id="edit-modal-title">문장 추가</div>
+    <div class="edit-field">
+      <div class="edit-lbl">한국어</div>
+      <textarea class="edit-inp" id="edit-ko" rows="2" placeholder="한국어 문장을 입력하세요"></textarea>
+    </div>
+    <div class="edit-field">
+      <div class="edit-lbl">영어 (정답)</div>
+      <textarea class="edit-inp" id="edit-en" rows="2" placeholder="영어 정답을 입력하세요"></textarea>
+    </div>
+    <div class="edit-field">
+      <div class="edit-lbl">힌트 / 카테고리</div>
+      <input class="edit-inp" id="edit-hint" placeholder="예: HAVE · 소유/관계"/>
+    </div>
+    <div class="edit-btns">
+      <button class="e-cancel" onclick="closeEditModal()">취소</button>
+      <button class="e-save" onclick="saveEdit()">저장</button>
+    </div>
+  </div>
+</div>
+
+<!-- VOICE SETTING PANEL -->
+<div class="voice-panel" id="voice-panel" onclick="if(event.target===this)closeVoicePanel()">
+  <div class="voice-sheet">
+    <div class="voice-bar"></div>
+    <div class="voice-header">
+      <div class="voice-title">🎙 음성 설정</div>
+      <button class="voice-close" onclick="closeVoicePanel()">✕</button>
+    </div>
+    <div class="voice-sub">더 자연스러운 발음을 위해 아이폰 고품질 음성을 선택하세요.<br>음성이 목록에 없으면 아래 안내를 따라 다운로드하세요.</div>
+
+    <!-- 재생 속도 -->
+    <div class="voice-section-title">재생 속도</div>
+    <div class="voice-speed">
+      <span class="vs-label">🐢</span>
+      <input class="vs-slider" id="speed-slider" type="range" min="0.5" max="1.5" step="0.05" value="0.88" oninput="onSpeedChange(this)"/>
+      <span class="vs-label">🐇</span>
+      <span class="vs-val" id="speed-val">0.9×</span>
+    </div>
+
+    <!-- 영어 음성 목록 -->
+    <div class="voice-section-title" style="margin-top:4px">영어 음성 선택</div>
+    <div class="voice-list" id="voice-list">
+      <div style="color:#6E6D85;font-size:13px;padding:12px">음성 목록을 불러오는 중...</div>
+    </div>
+
+    <!-- 다운로드 안내 -->
+    <div class="voice-tip">
+      <div class="voice-tip-title">📲 고품질 음성 다운로드 방법</div>
+      <div class="voice-tip-text">
+        설정 → 손쉬운 사용 → 말한 내용 → 음성<br>
+        → 영어(미국) → <b>Ava / Evan / Siri</b> 옆 ⬇️ 탭<br>
+        다운로드 후 앱으로 돌아와 다시 선택하세요
+      </div>
+    </div>
   </div>
 </div>
 
@@ -977,26 +1240,181 @@ function isCorrect(user, model){
 }
 
 /* ================================================================
-   TTS
+   TTS + VOICE SELECTION
 ================================================================ */
+let selectedVoiceName = localStorage.getItem('voice_name') || '';
+let speechRate = parseFloat(localStorage.getItem('speech_rate') || '0.88');
+let allEnVoices = [];
+
+// 추천 음성 목록 (이름, 설명, 이모지)
+const RECOMMENDED = [
+  {name:'Ava',        emoji:'👩',desc:'여성 · 고급형 · 가장 자연스러움',    priority:1},
+  {name:'Evan',       emoji:'👨',desc:'남성 · 고급형 · 명확한 발음',        priority:2},
+  {name:'Samantha',   emoji:'👩',desc:'여성 · 기본 고급 · 부드러운 목소리', priority:3},
+  {name:'Daniel',     emoji:'👨',desc:'남성 · 영국식 발음',                 priority:4},
+  {name:'Karen',      emoji:'👩',desc:'여성 · 호주식 발음',                 priority:5},
+  {name:'Moira',      emoji:'👩',desc:'여성 · 아일랜드 억양',               priority:6},
+  {name:'Rishi',      emoji:'👨',desc:'남성 · 인도식 영어',                 priority:7},
+  {name:'Siri',       emoji:'🍎',desc:'Siri 음성 (홈화면 앱에서만 가능)',   priority:8},
+];
+
+function loadVoices(){
+  return new Promise(resolve=>{
+    const tryLoad=()=>{
+      const voices=speechSynthesis.getVoices();
+      if(voices.length>0){ resolve(voices); return; }
+      setTimeout(tryLoad,100);
+    };
+    tryLoad();
+    if(speechSynthesis.onvoiceschanged!==undefined)
+      speechSynthesis.onvoiceschanged=()=>resolve(speechSynthesis.getVoices());
+  });
+}
+
+async function initVoices(){
+  const voices = await loadVoices();
+  allEnVoices = voices.filter(v=>v.lang.startsWith('en'));
+  // 저장된 음성이 없으면 첫 번째 고급 음성 자동 선택
+  if(!selectedVoiceName){
+    for(const r of RECOMMENDED){
+      const found=allEnVoices.find(v=>v.name.includes(r.name));
+      if(found){selectedVoiceName=found.name;break;}
+    }
+    if(!selectedVoiceName && allEnVoices.length>0)
+      selectedVoiceName=allEnVoices[0].name;
+    localStorage.setItem('voice_name',selectedVoiceName);
+  }
+}
+
+function getVoice(){
+  const voices=speechSynthesis.getVoices();
+  return voices.find(v=>v.name===selectedVoiceName) ||
+         voices.find(v=>v.lang.startsWith('en')) ||
+         null;
+}
+
 function speakKo(){
   if(!window.speechSynthesis) return;
   speechSynthesis.cancel();
   const u=new SpeechSynthesisUtterance(RAW[viewList[cur]][0]);
-  u.lang='ko-KR'; u.rate=0.88;
+  u.lang='ko-KR'; u.rate=speechRate;
   const btn=document.getElementById('spkbtn');
   const lbl=document.getElementById('spklbl');
   btn.classList.add('on'); lbl.textContent='재생 중...';
   u.onend=u.onerror=()=>{btn.classList.remove('on');lbl.textContent='한국어 듣기'};
   speechSynthesis.speak(u);
 }
-function speakEn(t){
+
+function speakEn(t, onEnd){
   if(!window.speechSynthesis) return;
   speechSynthesis.cancel();
   const u=new SpeechSynthesisUtterance(t);
-  u.lang='en-US'; u.rate=0.88;
+  u.lang='en-US'; u.rate=speechRate;
+  const v=getVoice();
+  if(v) u.voice=v;
+  if(onEnd) u.onend=onEnd;
   speechSynthesis.speak(u);
 }
+
+/* ── VOICE PANEL ── */
+function openVoicePanel(){
+  renderVoiceList();
+  document.getElementById('speed-slider').value=speechRate;
+  onSpeedChange(document.getElementById('speed-slider'));
+  document.getElementById('voice-panel').classList.add('open');
+}
+function closeVoicePanel(){
+  document.getElementById('voice-panel').classList.remove('open');
+}
+
+function onSpeedChange(el){
+  speechRate=parseFloat(el.value);
+  localStorage.setItem('speech_rate',speechRate);
+  const pct=((speechRate-0.5)/1.0*100).toFixed(0);
+  el.style.setProperty('--pct',pct+'%');
+  document.getElementById('speed-val')=(el.nextElementSibling||document.getElementById('speed-val'));
+  document.getElementById('speed-val').textContent=speechRate.toFixed(2).replace(/0+$/,'').replace(/\.$/,'')+'×';
+}
+
+function renderVoiceList(){
+  const list=document.getElementById('voice-list');
+  list.innerHTML='';
+  const voices=speechSynthesis.getVoices().filter(v=>v.lang.startsWith('en'));
+
+  if(voices.length===0){
+    list.innerHTML='<div style="color:#6E6D85;font-size:13px;padding:12px">음성을 불러올 수 없습니다.<br>페이지를 새로고침 해보세요.</div>';
+    return;
+  }
+
+  // 추천 음성 먼저 표시
+  const shown=new Set();
+  const sections=[
+    {label:'⭐ 추천 음성', items:[]},
+    {label:'기타 영어 음성', items:[]},
+  ];
+
+  RECOMMENDED.forEach(r=>{
+    const found=voices.filter(v=>v.name.toLowerCase().includes(r.name.toLowerCase()));
+    if(found.length>0){
+      found.forEach(v=>{
+        sections[0].items.push({voice:v, emoji:r.emoji, desc:r.desc});
+        shown.add(v.name);
+      });
+    } else {
+      sections[0].items.push({voice:null, name:r.name, emoji:r.emoji, desc:r.desc+'  (미설치 — 다운로드 필요)'});
+    }
+  });
+
+  voices.forEach(v=>{
+    if(!shown.has(v.name)) sections[1].items.push({voice:v,emoji:'🔊',desc:v.lang});
+  });
+
+  sections.forEach(sec=>{
+    if(sec.items.length===0) return;
+    const lbl=document.createElement('div');
+    lbl.style.cssText='font-size:10px;font-weight:700;color:#6E6D85;letter-spacing:.08em;text-transform:uppercase;margin:8px 0 6px';
+    lbl.textContent=sec.label;
+    list.appendChild(lbl);
+
+    sec.items.forEach(item=>{
+      const div=document.createElement('div');
+      const isSel=item.voice&&item.voice.name===selectedVoiceName;
+      const isUnavail=!item.voice;
+      div.className='voice-item'+(isSel?' selected':'')+(isUnavail?' unavail':'');
+
+      div.innerHTML=`
+        <div class="vi-emoji">${item.emoji}</div>
+        <div class="vi-info">
+          <div class="vi-name">${item.voice?item.voice.name:item.name}</div>
+          <div class="vi-desc">${item.desc}</div>
+        </div>
+        <div class="vi-right">
+          <div class="vi-check">✓</div>
+          ${item.voice?`<button class="vi-play" onclick="event.stopPropagation();previewVoice('${item.voice.name}')">▶</button>`:''}
+        </div>`;
+
+      if(item.voice){
+        div.onclick=()=>{
+          selectedVoiceName=item.voice.name;
+          localStorage.setItem('voice_name',selectedVoiceName);
+          renderVoiceList();
+          speakEn('Hello! This is a preview of my voice. How does it sound?');
+        };
+      }
+      list.appendChild(div);
+    });
+  });
+}
+
+function previewVoice(name){
+  speechSynthesis.cancel();
+  const u=new SpeechSynthesisUtterance('Hello! This is how I sound. Nice to meet you!');
+  u.lang='en-US'; u.rate=speechRate;
+  const v=speechSynthesis.getVoices().find(x=>x.name===name);
+  if(v) u.voice=v;
+  speechSynthesis.speak(u);
+}
+
 
 /* ================================================================
    SPEECH REC
@@ -1274,13 +1692,325 @@ function closePwa(){
 }
 
 /* ================================================================
+   DB MANAGER
+================================================================ */
+const DB_KEY = 'custom_db_v1';
+const DB_SRC_KEY = 'db_source';  // 'builtin' | 'custom'
+let customDB = JSON.parse(localStorage.getItem(DB_KEY) || 'null');
+let dbSource = localStorage.getItem(DB_SRC_KEY) || 'builtin';
+let uploadPreviewData = null;
+let editingIdx = -1;
+let currentDBTab = 'source';
+
+// 현재 활성 데이터 반환
+function getActiveDB(){
+  return (dbSource === 'custom' && customDB && customDB.length > 0) ? customDB : RAW;
+}
+
+// RAW를 현재 DB로 교체
+function applyDB(){
+  const db = getActiveDB();
+  // RAW 배열을 직접 교체 (참조를 유지하기 위해 splice 사용)
+  RAW.splice(0, RAW.length, ...db);
+  srsData = JSON.parse(localStorage.getItem(SRS_KEY) || '{}');
+  sessionOk = 0; sessionNg = 0;
+  cur = 0;
+  buildViewList();
+  render();
+}
+
+/* ── DB PANEL OPEN/CLOSE ── */
+function openDB(){
+  renderDBSourceTab();
+  renderDBStats();
+  document.getElementById('db-panel').classList.add('open');
+}
+function closeDB(){ document.getElementById('db-panel').classList.remove('open'); }
+
+function switchDBTab(tab){
+  currentDBTab = tab;
+  ['source','upload','edit'].forEach(t=>{
+    document.getElementById('dbtab-'+t).classList.toggle('active', t===tab);
+    document.getElementById('db-body-'+t).style.display = t===tab ? 'flex' : 'none';
+  });
+  if(tab==='edit') renderTable();
+  if(tab==='source') renderDBStats();
+}
+
+/* ── SOURCE TAB ── */
+function renderDBSourceTab(){
+  const hasCustom = customDB && customDB.length > 0;
+  document.getElementById('src-custom').style.display = hasCustom ? '' : 'none';
+  document.getElementById('src-custom-count').textContent = hasCustom ? customDB.length+'문장' : '0문장';
+  document.getElementById('src-builtin-count').textContent = RAW.length+'문장';
+
+  // active 표시
+  document.getElementById('src-builtin').classList.toggle('active', dbSource==='builtin'||!hasCustom);
+  document.getElementById('src-custom').classList.toggle('active', dbSource==='custom'&&hasCustom);
+}
+
+function selectSource(src){
+  if(src==='custom' && (!customDB || customDB.length===0)){
+    alert('커스텀 DB가 없습니다. 먼저 파일을 업로드해주세요.');
+    switchDBTab('upload');
+    return;
+  }
+  dbSource = src;
+  localStorage.setItem(DB_SRC_KEY, src);
+  renderDBSourceTab();
+  applyDB();
+  renderDBStats();
+}
+
+function renderDBStats(){
+  const db = getActiveDB();
+  const answered = Object.keys(srsData).filter(k=>srsData[k]&&srsData[k].totalAnswers>0).length;
+  const dueNow = [...Array(db.length).keys()].filter(i=>isDue(i)).length;
+  const okTotal = Object.values(srsData).reduce((s,v)=>s+(v.correct||0),0);
+  const ngTotal = Object.values(srsData).reduce((s,v)=>s+(v.wrong||0),0);
+  document.getElementById('db-stats-view').innerHTML =
+    `📚 전체 문장: <b style="color:#F2F1FF">${db.length}개</b><br>` +
+    `✅ 학습 완료: <b style="color:#3EC98A">${answered}개</b><br>` +
+    `🔄 오늘 복습 대기: <b style="color:#F5C842">${dueNow}개</b><br>` +
+    `🎯 총 정답: <b style="color:#3EC98A">${okTotal}회</b> / 오답: <b style="color:#F05C6E">${ngTotal}회</b>`;
+}
+
+/* ── UPLOAD TAB ── */
+const uploadZone = document.getElementById('upload-zone');
+uploadZone.addEventListener('dragover', e=>{e.preventDefault();uploadZone.classList.add('drag');});
+uploadZone.addEventListener('dragleave', ()=>uploadZone.classList.remove('drag'));
+uploadZone.addEventListener('drop', e=>{
+  e.preventDefault(); uploadZone.classList.remove('drag');
+  handleFile(e.dataTransfer.files[0]);
+});
+
+function handleFile(file){
+  if(!file) return;
+  const ext = file.name.split('.').pop().toLowerCase();
+  if(ext==='csv'||ext==='txt'){
+    const reader = new FileReader();
+    reader.onload = e => parseCSV(e.target.result);
+    reader.readAsText(file, 'UTF-8');
+  } else if(ext==='xlsx'||ext==='xls'){
+    const reader = new FileReader();
+    reader.onload = e => parseExcel(e.target.result);
+    reader.readAsArrayBuffer(file);
+  } else {
+    alert('CSV, Excel(.xlsx), TXT 파일만 지원합니다.');
+  }
+}
+
+function parseCSV(text){
+  const lines = text.split(/\r?\n/).filter(l=>l.trim());
+  const data = [];
+  for(const line of lines){
+    // 쉼표 구분, 따옴표 처리
+    const cols = line.match(/(".*?"|[^,]+)(?=,|$)/g) || line.split(',');
+    if(cols.length < 2) continue;
+    const ko = cols[0].replace(/^"|"$/g,'').trim();
+    const en = cols[1].replace(/^"|"$/g,'').trim();
+    const hint = cols[2] ? cols[2].replace(/^"|"$/g,'').trim() : '커스텀';
+    if(!ko || !en) continue;
+    // 헤더 스킵
+    if(ko==='한국어'||ko.toLowerCase()==='korean') continue;
+    data.push([ko, en, hint]);
+  }
+  showUploadPreview(data);
+}
+
+async function parseExcel(buffer){
+  // SheetJS CDN 동적 로드
+  if(!window.XLSX){
+    await new Promise((res,rej)=>{
+      const s=document.createElement('script');
+      s.src='https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+      s.onload=res; s.onerror=rej;
+      document.head.appendChild(s);
+    });
+  }
+  const wb = XLSX.read(buffer, {type:'array'});
+  const ws = wb.Sheets[wb.SheetNames[0]];
+  const rows = XLSX.utils.sheet_to_json(ws, {header:1});
+  const data = [];
+  for(const row of rows){
+    if(!row[0]||!row[1]) continue;
+    const ko = String(row[0]).trim();
+    const en = String(row[1]).trim();
+    const hint = row[2] ? String(row[2]).trim() : '커스텀';
+    if(ko==='한국어'||ko.toLowerCase()==='korean') continue;
+    if(!ko||!en) continue;
+    data.push([ko, en, hint]);
+  }
+  showUploadPreview(data);
+}
+
+function showUploadPreview(data){
+  if(!data||data.length===0){ alert('유효한 데이터가 없습니다. 형식을 확인해주세요.'); return; }
+  uploadPreviewData = data;
+  document.getElementById('upload-preview-title').textContent = `✅ ${data.length}개 문장 인식됨 — 미리보기`;
+  const list = document.getElementById('upload-preview-list');
+  list.innerHTML = data.slice(0,8).map((d,i)=>
+    `<div style="background:#14141E;border-radius:9px;padding:9px 11px">
+      <div style="font-size:12px;font-weight:600;color:#F2F1FF;margin-bottom:2px">${i+1}. ${d[0]}</div>
+      <div style="font-size:11px;color:#7B6EF6">${d[1]}</div>
+      <div style="font-size:10px;color:#6E6D85;margin-top:2px">${d[2]}</div>
+    </div>`
+  ).join('')+(data.length>8?`<div style="font-size:12px;color:#6E6D85;padding:6px">...외 ${data.length-8}개</div>`:'');
+  document.getElementById('upload-preview').style.display = '';
+}
+
+function cancelUpload(){
+  uploadPreviewData = null;
+  document.getElementById('upload-preview').style.display = 'none';
+  document.getElementById('file-input').value = '';
+}
+
+function confirmUpload(){
+  if(!uploadPreviewData) return;
+  customDB = uploadPreviewData;
+  localStorage.setItem(DB_KEY, JSON.stringify(customDB));
+  uploadPreviewData = null;
+  document.getElementById('upload-preview').style.display = 'none';
+  document.getElementById('file-input').value = '';
+  // 자동으로 커스텀 DB 선택
+  selectSource('custom');
+  switchDBTab('source');
+  alert(`✅ ${customDB.length}개 문장이 업로드되었습니다!\n커스텀 DB로 학습을 시작합니다.`);
+}
+
+function downloadTemplate(){
+  const csv = '한국어,영어,힌트\n반려동물 키우시나요?,Do you have any pets?,HAVE · 소유/관계\n저는 스테이크 먹을게요.,"I\'ll have the steak, please.",HAVE · 식사\n할 일이 산더미같이 쌓여 있다.,I have tons of work to do.,HAVE · 할 일';
+  downloadCSV(csv, '영작퀴즈_템플릿.csv');
+}
+
+function downloadCurrentDB(){
+  const db = getActiveDB();
+  const csv = ['한국어,영어,힌트'].concat(
+    db.map(d=>`"${d[0].replace(/"/g,'""')}","${d[1].replace(/"/g,'""')}","${d[2].replace(/"/g,'""')}"`)
+  ).join('\n');
+  downloadCSV(csv, '영작퀴즈_DB.csv');
+}
+
+function downloadCSV(csv, filename){
+  const bom = '\uFEFF';
+  const blob = new Blob([bom+csv], {type:'text/csv;charset=utf-8'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href=url; a.download=filename; a.click();
+  URL.revokeObjectURL(url);
+}
+
+/* ── EDIT TAB ── */
+function renderTable(){
+  const db = getActiveDB();
+  const q = (document.getElementById('tbl-search').value||'').toLowerCase();
+  const filtered = db.map((d,i)=>({d,i})).filter(({d})=>
+    !q || d[0].toLowerCase().includes(q) || d[1].toLowerCase().includes(q) || d[2].toLowerCase().includes(q)
+  );
+  document.getElementById('tbl-stats').textContent = `전체 ${db.length}개 / 검색 결과 ${filtered.length}개`;
+  document.getElementById('tbl-list').innerHTML = filtered.map(({d,i})=>`
+    <div class="tbl-item">
+      <div class="ti-num">${i+1}</div>
+      <div class="ti-body">
+        <div class="ti-ko">${d[0]}</div>
+        <div class="ti-en">${d[1]}</div>
+        <div class="ti-hint">${d[2]}</div>
+      </div>
+      <div class="ti-actions">
+        <button class="ti-btn" onclick="moveRow(${i},-1)" title="위로">↑</button>
+        <button class="ti-btn" onclick="moveRow(${i},1)" title="아래로">↓</button>
+        <button class="ti-btn" onclick="openEditModal(${i})" title="편집">✏️</button>
+        <button class="ti-btn" onclick="deleteRow(${i})" title="삭제" style="color:#F05C6E">🗑</button>
+      </div>
+    </div>`).join('');
+}
+
+function moveRow(idx, dir){
+  const db = getEditableDB();
+  const newIdx = idx + dir;
+  if(newIdx<0||newIdx>=db.length) return;
+  [db[idx], db[newIdx]] = [db[newIdx], db[idx]];
+  saveEditableDB(db);
+  renderTable();
+}
+
+function deleteRow(idx){
+  if(!confirm(`"${getActiveDB()[idx][0]}" 삭제하시겠습니까?`)) return;
+  const db = getEditableDB();
+  db.splice(idx, 1);
+  saveEditableDB(db);
+  renderTable();
+}
+
+function getEditableDB(){
+  if(dbSource==='custom' && customDB){
+    return [...customDB];
+  }
+  return [...RAW];
+}
+
+function saveEditableDB(db){
+  if(dbSource==='custom'){
+    customDB = db;
+    localStorage.setItem(DB_KEY, JSON.stringify(customDB));
+  } else {
+    // 내장 DB 편집 → 자동으로 커스텀으로 저장
+    customDB = db;
+    localStorage.setItem(DB_KEY, JSON.stringify(customDB));
+    dbSource = 'custom';
+    localStorage.setItem(DB_SRC_KEY, 'custom');
+    renderDBSourceTab();
+  }
+  applyDB();
+}
+
+/* ── EDIT MODAL ── */
+function openEditModal(idx){
+  editingIdx = idx;
+  const db = getActiveDB();
+  if(idx>=0){
+    const d = db[idx];
+    document.getElementById('edit-modal-title').textContent = '문장 편집';
+    document.getElementById('edit-ko').value = d[0];
+    document.getElementById('edit-en').value = d[1];
+    document.getElementById('edit-hint').value = d[2];
+  } else {
+    document.getElementById('edit-modal-title').textContent = '문장 추가';
+    document.getElementById('edit-ko').value = '';
+    document.getElementById('edit-en').value = '';
+    document.getElementById('edit-hint').value = '';
+  }
+  document.getElementById('edit-modal').classList.add('open');
+  setTimeout(()=>document.getElementById('edit-ko').focus(), 200);
+}
+function closeEditModal(){ document.getElementById('edit-modal').classList.remove('open'); }
+
+function saveEdit(){
+  const ko = document.getElementById('edit-ko').value.trim();
+  const en = document.getElementById('edit-en').value.trim();
+  const hint = document.getElementById('edit-hint').value.trim() || '커스텀';
+  if(!ko||!en){ alert('한국어와 영어를 모두 입력해주세요.'); return; }
+  const db = getEditableDB();
+  if(editingIdx>=0){
+    db[editingIdx] = [ko, en, hint];
+  } else {
+    db.push([ko, en, hint]);
+  }
+  saveEditableDB(db);
+  closeEditModal();
+  renderTable();
+  renderDBSourceTab();
+}
+
+/* ================================================================
    INIT
 ================================================================ */
 buildViewList();
 initRec();
-render();
+applyDB();
 initNotif();
 showPwaPrompt();
+initVoices();
 setTimeout(()=>{if(window.speechSynthesis){const u=new SpeechSynthesisUtterance('');speechSynthesis.speak(u);speechSynthesis.cancel();}},500);
 </script>
 </body>
