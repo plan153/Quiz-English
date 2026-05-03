@@ -302,7 +302,7 @@ body{display:flex;flex-direction:column;height:100dvh}
 .bot-row2{display:flex;gap:10px;align-items:center;justify-content:center}
 
 /* ── MODE BAR ── */
-.modebar{display:flex;background:var(--card);border-top:1px solid var(--border);flex-shrink:0}
+.modebar{display:flex;background:var(--card);border-top:1px solid var(--border);flex-shrink:0;padding-bottom:max(env(safe-area-inset-bottom),4px)}
 .modeitem{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;padding:10px 4px;cursor:pointer;border:none;background:transparent;font-family:inherit;position:relative}
 .modeitem.active .mi-icon,.modeitem.active .mi-label{color:var(--accent)}
 .modeitem.active::after{content:'';position:absolute;top:0;left:20%;right:20%;height:2px;background:var(--accent);border-radius:0 0 2px 2px}
@@ -527,10 +527,10 @@ body{display:flex;flex-direction:column;height:100dvh}
 <!-- ══ MODE 2: 변형 연습 ══ -->
 <div class="mode-screen" id="screen-var">
   <div class="var-type-tabs" id="var-type-tabs">
-    <button class="vt-tab on" onclick="selectVarType('pnq')">↔ 긍·부·질문</button>
-    <button class="vt-tab" onclick="selectVarType('tense')">⏱ 시제 변형</button>
-    <button class="vt-tab" onclick="selectVarType('verb')">🔁 동사 교체</button>
-    <button class="vt-tab" onclick="selectVarType('subj')">👥 주어 교체</button>
+    <button class="vt-tab on" data-vt="pnq" onclick="selectVarType('pnq')">↔ 긍·부·질문</button>
+    <button class="vt-tab" data-vt="tense" onclick="selectVarType('tense')">⏱ 시제 변형</button>
+    <button class="vt-tab" data-vt="verb" onclick="selectVarType('verb')">🔁 동사 교체</button>
+    <button class="vt-tab" data-vt="subj" onclick="selectVarType('subj')">👥 주어 교체</button>
   </div>
   <div class="var-seed-card" id="var-seed-card">
     <div class="var-seed-label">씨앗 문장 <span id="var-seed-idx" style="font-size:10px;color:var(--muted)"></span></div>
@@ -561,12 +561,12 @@ body{display:flex;flex-direction:column;height:100dvh}
 <!-- ══ MODE 4: OPIc / 스몰토크 ══ -->
 <div class="mode-screen" id="screen-opic">
   <div class="op-cat-bar" id="op-cat-bar">
-    <button class="op-cat-btn on" onclick="selectOpCat('intro')">👋 자기소개</button>
-    <button class="op-cat-btn" onclick="selectOpCat('hobby')">🎨 취미</button>
-    <button class="op-cat-btn" onclick="selectOpCat('job')">💼 직장</button>
-    <button class="op-cat-btn" onclick="selectOpCat('daily')">🌅 일상</button>
-    <button class="op-cat-btn" onclick="selectOpCat('travel')">✈️ 여행</button>
-    <button class="op-cat-btn" onclick="selectOpCat('small')">💬 스몰토크</button>
+    <button class="op-cat-btn on" data-cat="intro" onclick="selectOpCat('intro')">👋 자기소개</button>
+    <button class="op-cat-btn" data-cat="hobby" onclick="selectOpCat('hobby')">🎨 취미</button>
+    <button class="op-cat-btn" data-cat="job" onclick="selectOpCat('job')">💼 직장</button>
+    <button class="op-cat-btn" data-cat="daily" onclick="selectOpCat('daily')">🌅 일상</button>
+    <button class="op-cat-btn" data-cat="travel" onclick="selectOpCat('travel')">✈️ 여행</button>
+    <button class="op-cat-btn" data-cat="small" onclick="selectOpCat('small')">💬 스몰토크</button>
   </div>
   <div class="op-body" id="op-body"></div>
 </div>
@@ -1622,6 +1622,7 @@ function recordAnswer(i, ok){
 let cur=0, finalTxt='', isRec=false, recObj=null;
 let curTab='all';
 let sessionOk=0, sessionNg=0;
+// sessionStartOk/Ng declared in SESSION COMPLETE section above
 
 // filtered list for current tab
 let viewList=[...Array(RAW.length).keys()];
@@ -1671,6 +1672,7 @@ function isCorrect(user, model){
   }
   return false;
 }
+/* isCorrect is defined above (flexible version) */
 function lcs(a,b){
   const m=a.length,n=b.length;
   const dp=Array.from({length:m+1},()=>new Array(n+1).fill(0));
@@ -1694,11 +1696,7 @@ function diffHTML(user, model){
     return `<span class="diff-missing">[${o.w}]</span>`;
   }).join(' ');
 }
-function isCorrect(user, model){
-  const ut=tokenize(user), mt=tokenize(model);
-  if(ut.length!==mt.length) return false;
-  return ut.every((w,i)=>w===mt[i]);
-}
+/* isCorrect — flexible version defined above in DIFF section */
 
 /* ================================================================
    TTS + VOICE SELECTION
@@ -2051,6 +2049,12 @@ function render(){
   finalTxt=''; setPlaceholder();
   document.getElementById('fb').style.display='none';
   document.getElementById('srs-info').style.display='none';
+  const er=document.getElementById('ease-row');
+  if(er) er.style.display='none';
+  const ab=document.getElementById('ai-btn');
+  if(ab){ ab.style.display='none'; ab.disabled=false; }
+  const ar=document.getElementById('ai-result');
+  if(ar){ ar.style.display='none'; ar.textContent=''; }
   document.getElementById('mring').classList.remove('rec');
   document.getElementById('mlabel').textContent='탭하여 녹음';
   if(isRec){try{recObj.stop();}catch(e){}isRec=false;}
@@ -2675,7 +2679,7 @@ function buildVariations(en, ko, type){
 
 function selectVarType(type){
   varType=type; varRevealed=[];
-  document.querySelectorAll('.vt-tab').forEach((b,i)=>b.classList.toggle('on',['pnq','tense','verb','subj'][i]===type));
+  document.querySelectorAll('.vt-tab').forEach(b=>b.classList.toggle('on',b.dataset.vt===type));
   renderVarList();
 }
 
@@ -2717,13 +2721,22 @@ function varRevealAll(){
   renderVarList();
 }
 
+function varMaxIdx(){
+  const db=getActiveDB();
+  const step=Math.max(1,Math.floor(db.length/50));
+  return Math.floor((db.length-1)/step);
+}
 function varGo(dir){
-  varSeedIdx=Math.max(0, varSeedIdx+dir);
+  varSeedIdx=Math.min(Math.max(0, varSeedIdx+dir), varMaxIdx());
   varRevealed=[];
   renderVarList();
 }
 
-function initVarMode(){ varSeedIdx=Math.floor(Math.random()*50); varRevealed=[]; renderVarList(); }
+function initVarMode(){
+  varSeedIdx=Math.floor(Math.random()*(varMaxIdx()+1));
+  varRevealed=[];
+  renderVarList();
+}
 
 /* ================================================================
    MODE 3 — 문장 늘리기
@@ -2752,14 +2765,20 @@ let sbSeedIdx=0, sbMode='basic', sbUnlocked=0;
 function selectSbMode(m){
   sbMode=m;
   document.querySelectorAll('.smt-btn').forEach((b,i)=>b.classList.toggle('on',['basic','time','connect'][i]===m));
-  sbUnlocked=0; renderSbContent();
+  sbUnlocked=0;
+  if(m==='connect') sbSeedIdx=Math.floor(Math.random()*CONNECT_PATTERNS.length);
+  else sbSeedIdx=Math.floor(Math.random()*SB_SEEDS.length);
+  renderSbContent();
 }
 function sbNextSeed(){
   sbSeedIdx=Math.floor(Math.random()*SB_SEEDS.length);
-  sbUnlocked=0; renderSbContent();
+  sbUnlocked=0;
+  // for connect mode, use CONNECT_PATTERNS length
+  if(sbMode==='connect') sbSeedIdx=Math.floor(Math.random()*CONNECT_PATTERNS.length);
+  renderSbContent();
 }
 function sbUnlockStep(){
-  sbUnlocked=Math.min(sbUnlocked+1, 4);
+  sbUnlocked=Math.min(sbUnlocked+1, 3);
   renderSbContent();
 }
 function partTag(cls,lbl,txt){
@@ -2811,11 +2830,21 @@ function renderSbContent(){
     const base=`${seed.s} ${seed.v} ${seed.o}.`;
     const tenses=[
       {badge:'현재',cls:'vr-pos',ko:`${seed.sK} ${seed.oK} ${seed.vK}.`,en:base},
-      {badge:'과거',cls:'vr-past',ko:`${seed.sK} ${seed.oK} ~했다.`,en:`${seed.s} ${seed.v.replace(/go/,'went').replace(/eat/,'ate').replace(/have/,'had').replace(/make/,'made').replace(/take/,'took').replace(/drink/,'drank').replace(/do/,'did').replace(/read/,'read').replace(/get/,'got').replace(/see/,'saw').replace(/know/,'knew')}${/[goes|eats|reads|has|makes|takes|drinks|does|gets|sees|knows]/.test(seed.v)?'':seed.v.endsWith('e')?seed.v+'d':seed.v+'ed'} ${seed.o} yesterday.`},
+      {badge:'과거',cls:'vr-past',ko:`${seed.sK} ${seed.oK} ~했다.`,en:(()=>{
+        const irr={go:'went',eat:'ate',have:'had',make:'made',take:'took',drink:'drank',do:'did',get:'got',see:'saw',know:'knew',go:'went',give:'gave',come:'came',read:'read',run:'ran',write:'wrote',sit:'sat',stand:'stood',buy:'bought',bring:'brought',think:'thought',feel:'felt',keep:'kept',leave:'left',meet:'met',tell:'told',find:'found',spend:'spent',hold:'held',send:'sent',build:'built',break:'broke',choose:'chose',drive:'drove',fall:'fell',grow:'grew',hear:'heard',lose:'lost',mean:'meant',pay:'paid',ride:'rode',rise:'rose',say:'said','show':'showed',sleep:'slept',speak:'spoke',take:'took',teach:'taught',understand:'understood',wake:'woke',wear:'wore',win:'won'};
+        const v=seed.v.replace(/s$/,'');
+        const past=irr[v]||(v.endsWith('e')?v+'d':v.endsWith('y')&&!/[aeiou]y$/.test(v)?v.slice(0,-1)+'ied':v+'ed');
+        return `${seed.s} ${past} ${seed.o} yesterday.`;
+      })()},
       {badge:'미래',cls:'vr-fut',ko:`${seed.sK} ${seed.oK} ~할 것이다.`,en:`${seed.s} will ${seed.v} ${seed.o} tomorrow.`},
-      {badge:'진행',cls:'vr-prog',ko:`${seed.sK} ${seed.oK} ~하고 있다.`,en:`${seed.s} ${seed.s==='I'?'am':'is'} ${seed.v.endsWith('e')?seed.v.slice(0,-1):seed.v}ing ${seed.o} now.`},
+      {badge:'진행',cls:'vr-prog',ko:`${seed.sK} ${seed.oK} ~하고 있다.`,en:(()=>{
+        const v=seed.v.replace(/s$/,'');
+        const ving=v.endsWith('ie')?v.slice(0,-2)+'ying':v.endsWith('e')&&!v.endsWith('ee')?v.slice(0,-1)+'ing':v+'ing';
+        const aux=seed.s==='I'?'am':['He','She','It'].includes(seed.s)?'is':'are';
+        return `${seed.s} ${aux} ${ving} ${seed.o} now.`;
+      })()},
       {badge:'부정',cls:'vr-neg',ko:`${seed.sK} ${seed.oK} ~하지 않는다.`,en:`${seed.s} don't ${seed.v} ${seed.o}.`},
-      {badge:'질문',cls:'vr-q',ko:`${seed.sK} ${seed.oK} ~하나요?`,en:`Do ${seed.s.toLowerCase()} ${seed.v} ${seed.o}?`},
+      {badge:'질문',cls:'vr-q',ko:`${seed.sK} ${seed.oK} ~하나요?`,en:`Do you ${seed.v.replace(/s$/,'')} ${seed.o}?`},
     ];
     el.innerHTML=`<div class="sb-step-card">
       <div class="sb-step-header"><div class="sb-step-num">📌</div><div><div class="sb-step-title">씨앗 문장</div><div class="sb-step-sub">하나를 6가지로 변형</div></div></div>
@@ -2847,7 +2876,13 @@ function renderSbContent(){
     </div>`;
   }
 }
-function initSbMode(){ sbSeedIdx=Math.floor(Math.random()*SB_SEEDS.length); sbUnlocked=0; renderSbContent(); }
+function initSbMode(){
+  sbMode='basic';
+  document.querySelectorAll('.smt-btn').forEach((b,i)=>b.classList.toggle('on',i===0));
+  sbSeedIdx=Math.floor(Math.random()*SB_SEEDS.length);
+  sbUnlocked=0;
+  renderSbContent();
+}
 
 /* ================================================================
    MODE 4 — OPIc / 스몰토크
@@ -2934,7 +2969,7 @@ const OPIC_DATA={
 let opCat='intro';
 function selectOpCat(cat){
   opCat=cat;
-  document.querySelectorAll('.op-cat-btn').forEach(b=>b.classList.toggle('on',b.getAttribute('onclick').includes("'"+cat+"'")));
+  document.querySelectorAll('.op-cat-btn').forEach(b=>b.classList.toggle('on',b.dataset.cat===cat));
   renderOpicBody();
 }
 function toggleOpCard(idx){
