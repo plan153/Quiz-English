@@ -810,6 +810,16 @@ body {
       <div class="acard">
         <div class="alabel">내 영작</div>
         <div class="atxt ph" id="atxt">마이크 버튼을 눌러 영어로 말하세요</div>
+        <!-- 타이핑 모드: STT 미지원 환경에서 직접 입력 -->
+        <div id="type-row" style="display:none;margin-top:10px;display:none">
+          <input id="type-input" type="text" placeholder="영어로 입력 후 Enter..."
+            style="width:100%;height:40px;border-radius:10px;padding:0 12px;background:var(--bg);border:1px solid var(--border);color:var(--text);font-size:14px;font-family:inherit;outline:none"
+            onkeydown="if(event.key==='Enter'&&this.value.trim()){gradeTyped(this.value.trim());this.value=''}">
+        </div>
+        <button id="type-toggle-btn" onclick="toggleTypeMode()"
+          style="margin-top:8px;font-size:11px;color:var(--muted);background:transparent;border:1px solid var(--border);border-radius:99px;padding:3px 12px;cursor:pointer;font-family:inherit">
+          ⌨️ 타이핑으로 입력
+        </button>
       </div>
       <!-- 피드백 카드 (채점 후 표시) -->
       <div class="fb" id="fb">
@@ -2281,6 +2291,8 @@ function render() {
   const er = Utils.el('ease-row'); if (er) er.style.display = 'none';
   const ab = Utils.el('ai-btn');   if (ab) { ab.style.display = 'none'; ab.disabled = false; }
   const ar = Utils.el('ai-result'); if (ar) { ar.style.display = 'none'; ar.textContent = ''; }
+  // 타이핑 입력창 초기화
+  const ti = Utils.el('type-input'); if (ti) ti.value = '';
   // 마이크 초기화
   const mr = Utils.el('mring'); if (mr) mr.classList.remove('rec');
   const ml = Utils.el('mlabel'); if (ml) ml.textContent = '탭하여 녹음';
@@ -2304,22 +2316,41 @@ function go(n) {
   render();
 }
 
-/* 정답 보기 버튼: 모범 답안 표시 + TTS */
+/* 정답 보기 버튼: 모범 답안 표시 + SRS '본 것' 기록 + TTS */
 function showAns() {
   const db = getActiveDB();
   const idx = viewList[cur] ?? 0;
   const q = db[idx];
   if (!q) return;
+
+  // 답안 표시
   const at = Utils.el('atxt');
   if (at) { at.className = 'atxt'; at.textContent = q[1]; }
+
+  // SRS: 정답 보기 = 스스로 못 풀었음 → wrong 처리 (단, 이미 답변한 문제는 중복 기록 방지)
   const s = SrsSystem.getItem(idx);
+  const alreadyGraded = lastGradedIdx === idx;
+  if (!alreadyGraded) {
+    SrsSystem.record(idx, 'wrong');
+    sessionNg++;
+    lastGradedIdx = idx;
+    updatePills();
+  }
+
+  // SRS 정보 표시
+  const sAfter = SrsSystem.getItem(idx);
   const si = Utils.el('srs-info');
   if (si) {
     si.style.display = 'block';
-    si.textContent = s.totalAnswers > 0
-      ? `복습: ${s.nextReview || '미정'} · 정답 ${s.correct}회 / 오답 ${s.wrong}회`
-      : '아직 풀지 않은 문제입니다.';
+    si.textContent = alreadyGraded
+      ? `복습: ${sAfter.nextReview || '미정'} · 정답 ${sAfter.correct}회 / 오답 ${sAfter.wrong}회`
+      : `📖 정답 확인. 내일 다시 복습 · 오답 ${sAfter.wrong}회`;
   }
+
+  // 난이도 버튼 표시
+  const er = Utils.el('ease-row'); if (er) er.style.display = 'flex';
+
+  // TTS 재생
   speakEn(q[1]);
 }
 
@@ -2752,8 +2783,28 @@ function renderGrid() {
   if (pt) pt.textContent = `문제 목록 (${viewList.length}개 · 완료 ${answered}/${db.length})`;
 }
 
+/* 타이핑 모드 토글 - STT 미지원 환경 대비 */
+let typeModeOn = false;
+function toggleTypeMode() {
+  typeModeOn = !typeModeOn;
+  const row = Utils.el('type-row');
+  const btn = Utils.el('type-toggle-btn');
+  const inp = Utils.el('type-input');
+  if (row) row.style.display = typeModeOn ? 'block' : 'none';
+  if (btn) btn.textContent = typeModeOn ? '🎙 음성으로 입력' : '⌨️ 타이핑으로 입력';
+  if (btn) btn.style.color = typeModeOn ? 'var(--accent)' : 'var(--muted)';
+  if (typeModeOn && inp) { inp.focus(); }
+}
+
+/* 타이핑 입력 채점 */
+function gradeTyped(text) {
+  const at = Utils.el('atxt');
+  if (at) { at.className = 'atxt'; at.textContent = text; }
+  grade(text);
+}
+
 /* ============================================================
-   MODE SWITCHER — 4개 모드 탭 전환
+   모드 전환
    ============================================================ */
 function switchMode(mode) {
   ['quiz','var','sb','opic'].forEach(m => {
@@ -2762,6 +2813,8 @@ function switchMode(mode) {
     if (scr) scr.classList.toggle('active', m === mode);
     if (btn) btn.classList.toggle('active', m === mode);
   });
+  // 각 모드 전환 시 초기화 (quiz는 기존 상태 유지하며 재렌더)
+  if (mode === 'quiz') render();
   if (mode === 'var')  VarMode.init();
   if (mode === 'sb')   SBMode.init();
   if (mode === 'opic') OpicMode.init();
@@ -2889,10 +2942,13 @@ const SBMode = {
   ],
 
   init() {
-    this.mode = 'basic';
-    this.seedIdx  = Math.floor(Math.random() * this.SEEDS.length);
+    // 첫 진입 시에만 'basic'으로 설정, 이후 재방문 시 현재 모드 유지
+    if (!this._initialized) { this.mode = 'basic'; this._initialized = true; }
     this.unlocked = 0;
-    Utils.qsa('.smt-btn').forEach((b, i) => b.classList.toggle('on', i === 0));
+    this.seedIdx  = this.mode === 'connect'
+      ? Math.floor(Math.random() * this.CONNECT.length)
+      : Math.floor(Math.random() * this.SEEDS.length);
+    Utils.qsa('.smt-btn').forEach((b, i) => b.classList.toggle('on', ['basic','time','connect'][i] === this.mode));
     this.render();
   },
 
@@ -3119,7 +3175,13 @@ const OpicMode = {
     ],
   },
 
-  init()       { this.cat = 'intro'; Utils.qsa('.op-cat-btn').forEach(b => b.classList.toggle('on', b.dataset.cat === 'intro')); this.render(); },
+  // 첫 진입 시에만 'intro'로 설정, 이후 재방문 시 현재 카테고리 유지
+  init() {
+    const isFirst = !this._initialized;
+    if (isFirst) { this.cat = 'intro'; this._initialized = true; }
+    Utils.qsa('.op-cat-btn').forEach(b => b.classList.toggle('on', b.dataset.cat === this.cat));
+    this.render();
+  },
   setCat(cat)  { this.cat = cat; Utils.qsa('.op-cat-btn').forEach(b => b.classList.toggle('on', b.dataset.cat === cat)); this.render(); },
   toggleCard(idx) { const cards = Utils.qsa('.op-q-card'); if (cards[idx]) cards[idx].classList.toggle('open'); },
 
@@ -3431,19 +3493,34 @@ function saveEdit() {
   const en   = (Utils.el('edit-en')?.value||'').trim();
   const hint = (Utils.el('edit-hint')?.value||'').trim() || '커스텀';
   if (!ko||!en) { alert('한국어와 영어 문장을 모두 입력하세요.'); return; }
-  let db = customDB ? [...customDB] : [...RAW];
-  if (_editingIdx>=0) db[_editingIdx]=[ko,en,hint];
-  else db.push([ko,en,hint]);
-  customDB = db; localStorage.setItem(DB_KEY, JSON.stringify(customDB));
-  if (dbSource!=='custom') { dbSource='custom'; localStorage.setItem(SRC_KEY,'custom'); }
+
+  // 내장 DB를 편집하려는 경우 커스텀 DB로 분리 저장 (RAW 원본 보존)
+  const isEditingBuiltin = dbSource === 'builtin' && _editingIdx >= 0;
+  if (isEditingBuiltin) {
+    if (!confirm('내장 DB를 편집하면 커스텀 DB로 복사됩니다. 계속하시겠어요?')) return;
+  }
+
+  let db = customDB ? [...customDB] : [...RAW]; // RAW는 복사본, 원본 불변
+  if (_editingIdx >= 0) db[_editingIdx] = [ko, en, hint];
+  else db.push([ko, en, hint]);
+
+  customDB = db;
+  localStorage.setItem(DB_KEY, JSON.stringify(customDB));
+  if (dbSource !== 'custom') { dbSource = 'custom'; localStorage.setItem(SRC_KEY, 'custom'); }
   applyDB(); closeEditModal(); renderTable();
 }
 
 function deleteEntry(i) {
   if (!confirm('이 문장을 삭제할까요?')) return;
+  // 내장 DB 삭제 시 커스텀 복사본에서 삭제
+  if (dbSource === 'builtin') {
+    if (!confirm('내장 DB의 문장을 삭제하면 커스텀 DB로 복사됩니다. 계속하시겠어요?')) return;
+  }
   let db = customDB ? [...customDB] : [...RAW];
-  db.splice(i,1); customDB=db;
+  db.splice(i, 1);
+  customDB = db;
   localStorage.setItem(DB_KEY, JSON.stringify(customDB));
+  if (dbSource !== 'custom') { dbSource = 'custom'; localStorage.setItem(SRC_KEY, 'custom'); }
   applyDB(); renderTable();
 }
 
@@ -3479,8 +3556,53 @@ function run() {
   }, 500);
 }
 
+
 /* DOM 준비 완료 후 앱 시작 */
 document.addEventListener('DOMContentLoaded', run);
+
+/* ============================================================
+   스와이프 제스처 — 퀴즈 화면에서 좌/우 스와이프로 문제 이동
+   ============================================================ */
+(function initSwipe() {
+  let startX = 0, startY = 0;
+  const THRESHOLD = 60; // px 이상 스와이프 시 작동
+
+  document.addEventListener('touchstart', e => {
+    startX = e.touches[0].clientX;
+    startY = e.touches[0].clientY;
+  }, { passive: true });
+
+  document.addEventListener('touchend', e => {
+    // 퀴즈 모드에서만, 패널/팝업이 닫혀 있을 때만 작동
+    if (document.querySelector('.session-overlay.open') ||
+        document.querySelector('.ob-overlay.open') ||
+        document.querySelector('.panel-overlay.open') ||
+        document.querySelector('.db-panel-overlay.open') ||
+        document.querySelector('.voice-panel.open')) return;
+    if (!document.getElementById('screen-quiz').classList.contains('active')) return;
+
+    const dx = e.changedTouches[0].clientX - startX;
+    const dy = e.changedTouches[0].clientY - startY;
+    // 세로 스크롤보다 가로 스와이프가 클 때만 적용
+    if (Math.abs(dx) > THRESHOLD && Math.abs(dx) > Math.abs(dy) * 1.5) {
+      if (dx < 0) go(cur + 1); // 왼쪽 스와이프 → 다음
+      else         go(cur - 1); // 오른쪽 스와이프 → 이전
+    }
+  }, { passive: true });
+})();
+
+/* ============================================================
+   키보드 단축키 지원 (데스크톱 사용자 편의)
+   ← → 키로 문제 이동, Space로 마이크 토글, Enter로 정답 보기
+   ============================================================ */
+document.addEventListener('keydown', e => {
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+  if (!document.getElementById('screen-quiz').classList.contains('active')) return;
+  if (e.key === 'ArrowRight') go(cur + 1);
+  else if (e.key === 'ArrowLeft') go(cur - 1);
+  else if (e.key === ' ') { e.preventDefault(); toggleMic(); }
+  else if (e.key === 'Enter') showAns();
+});
 </script>
 </body>
 </html>
