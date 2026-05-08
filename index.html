@@ -733,6 +733,194 @@ body {
   font-size: 14px; font-weight: 700; border: none; cursor: pointer; font-family: inherit;
 }
 
+
+
+/* ============================================================
+   쉐도잉 모드 — 영어 문장 듣고 따라 말하기
+   ============================================================ */
+.shadow-screen { flex:1; display:flex; flex-direction:column; overflow:hidden; }
+.shadow-scroll  { flex:1; overflow-y:auto; padding:10px 16px 16px; display:flex; flex-direction:column; gap:12px; }
+
+/* 진행 인디케이터 */
+.shadow-progress { display:flex; align-items:center; gap:10px; flex-shrink:0; padding:8px 16px 0; }
+.shadow-prog-bar { flex:1; height:4px; background:var(--border); border-radius:99px; overflow:hidden; }
+.shadow-prog-fill{ height:100%; background:linear-gradient(90deg,#3EC98A,var(--accent)); border-radius:99px; transition:width .4s; }
+.shadow-prog-num { font-size:12px; color:var(--muted); font-weight:700; flex-shrink:0; }
+
+/* 문장 카드 */
+.shadow-card {
+  background:var(--card); border:1px solid var(--border); border-radius:18px; padding:18px;
+}
+.shadow-card-label { font-size:10px; font-weight:700; color:var(--muted); letter-spacing:.1em; text-transform:uppercase; margin-bottom:8px; }
+.shadow-en   { font-size:20px; font-weight:700; line-height:1.6; margin-bottom:6px; word-break:break-word; }
+.shadow-ko   { font-size:14px; color:var(--muted); }
+.shadow-hint { font-size:11px; color:var(--accent); margin-top:4px; }
+
+/* 재생/녹음 컨트롤 */
+.shadow-controls { display:flex; flex-direction:column; gap:8px; }
+.shadow-row      { display:flex; gap:8px; }
+.shadow-btn {
+  flex:1; height:52px; border-radius:14px; font-size:14px; font-weight:700;
+  border:none; cursor:pointer; font-family:inherit; transition:all .2s;
+  display:flex; align-items:center; justify-content:center; gap:7px;
+}
+.shadow-btn:active { transform:scale(.96); }
+.sbtn-play   { background:var(--adim); color:var(--accent); border:1px solid rgba(123,110,246,.3); }
+.sbtn-rec    { background:linear-gradient(135deg,var(--ng),#C0304A); color:#fff; box-shadow:0 3px 14px rgba(240,92,110,.3); }
+.sbtn-rec.recording { animation:mpulse 1s infinite; }
+.sbtn-myplay { background:rgba(62,201,138,.1); color:var(--ok); border:1px solid rgba(62,201,138,.25); }
+.sbtn-myplay:disabled { opacity:.35; cursor:default; }
+.sbtn-next   { background:linear-gradient(135deg,var(--accent),#5B54D4); color:#fff; flex:.6; }
+
+/* 파형 시각화 */
+.shadow-wave { height:36px; background:rgba(255,255,255,.03); border-radius:10px; border:1px solid var(--border); display:flex; align-items:center; justify-content:center; gap:2px; padding:0 10px; }
+.wave-bar    { width:3px; border-radius:99px; background:var(--accent); opacity:.4; transition:height .1s; }
+
+/* 비교 상태 */
+.shadow-compare {
+  background:rgba(62,201,138,.06); border:1px solid rgba(62,201,138,.2);
+  border-radius:12px; padding:10px 14px; font-size:12px; color:var(--muted);
+  display:flex; align-items:center; gap:8px;
+}
+.shadow-compare-icon { font-size:18px; }
+
+/* 연속 재생 (목표 플레이리스트) */
+.playlist-banner {
+  background:rgba(245,200,66,.08); border:1px solid rgba(245,200,66,.2);
+  border-radius:12px; padding:10px 14px; font-size:13px;
+  display:flex; align-items:center; justify-content:space-between; gap:10px;
+}
+.playlist-label { color:var(--gold); font-weight:700; }
+.playlist-stop  {
+  font-size:12px; padding:4px 12px; border-radius:99px; background:rgba(245,200,66,.1);
+  color:var(--gold); border:1px solid rgba(245,200,66,.25); cursor:pointer;
+  font-family:inherit; font-weight:700;
+}
+
+/* ============================================================
+   학습목표 (Study Goals) — DB 패널 내 탭
+   ============================================================ */
+.goal-list    { display:flex; flex-direction:column; gap:8px; }
+.goal-card    {
+  background:var(--card); border:1px solid var(--border); border-radius:14px; padding:12px 14px;
+  cursor:pointer; transition:all .2s;
+}
+.goal-card.active-goal { border-color:var(--accent); background:var(--adim); }
+.goal-card:active { transform:scale(.98); }
+.goal-card-head { display:flex; align-items:center; gap:10px; }
+.goal-dot       { width:10px; height:10px; border-radius:50%; flex-shrink:0; }
+.goal-name      { font-size:14px; font-weight:700; flex:1; }
+.goal-count     { font-size:11px; color:var(--muted); }
+.goal-actions   { display:flex; gap:6px; margin-top:8px; }
+.goal-action-btn {
+  font-size:11px; padding:4px 10px; border-radius:7px; cursor:pointer;
+  font-family:inherit; font-weight:600; transition:all .2s; border:none;
+}
+.goal-action-btn:active { transform:scale(.97); }
+.gbtn-play    { background:var(--adim); color:var(--accent); }
+.gbtn-shadow  { background:rgba(62,201,138,.1); color:var(--ok); }
+.gbtn-delete  { background:rgba(240,92,110,.1); color:var(--ng); }
+.goal-new-btn {
+  width:100%; height:44px; border-radius:12px; background:var(--adim); color:var(--accent);
+  border:1px solid rgba(123,110,246,.3); font-size:14px; font-weight:700;
+  cursor:pointer; font-family:inherit; transition:all .2s;
+}
+.goal-new-btn:active { transform:scale(.97); }
+
+/* 목표 내 문장 리스트 */
+.goal-sentence-item {
+  display:flex; align-items:center; gap:8px; padding:9px 12px;
+  background:var(--card); border:1px solid var(--border); border-radius:11px; margin-bottom:6px;
+}
+.gsi-num  { font-size:10px; color:var(--muted); width:24px; flex-shrink:0; }
+.gsi-body { flex:1; min-width:0; }
+.gsi-en   { font-size:13px; font-weight:500; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.gsi-ko   { font-size:11px; color:var(--muted); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.gsi-move { font-size:11px; padding:3px 8px; border-radius:7px; background:var(--adim); color:var(--accent); border:1px solid rgba(123,110,246,.25); cursor:pointer; font-family:inherit; flex-shrink:0; }
+.gsi-del  { font-size:11px; padding:3px 8px; border-radius:7px; background:rgba(240,92,110,.1); color:var(--ng); border:1px solid rgba(240,92,110,.2); cursor:pointer; font-family:inherit; flex-shrink:0; }
+
+/* 오답 횟수 배지 */
+.wrong-badge { font-size:11px; font-weight:700; padding:2px 7px; border-radius:99px; flex-shrink:0; }
+.wb-safe    { background:rgba(62,201,138,.12); color:var(--ok); }     /* 0-4 🟢 */
+.wb-caution { background:rgba(245,200,66,.1);  color:var(--gold); }   /* 5-9 🟡 */
+.wb-warning { background:rgba(240,150,50,.12); color:#E09050; }       /* 10-14 🟠 */
+.wb-danger  { background:rgba(240,92,110,.12); color:var(--ng); }     /* 15+ 🔴 */
+
+/* ============================================================
+   환영 화면 — 재진입 시 이어하기 / 핵심 복습 선택
+   ============================================================ */
+.welcome-overlay {
+  position: fixed; inset: 0; z-index: 450;
+  background: var(--bg);
+  display: none; flex-direction: column; align-items: center;
+  justify-content: center; padding: 24px;
+}
+.welcome-overlay.open { display: flex; animation: fadeIn .35s ease; }
+.welcome-logo  { font-size: 52px; margin-bottom: 14px; }
+.welcome-title { font-size: 22px; font-weight: 700; color: var(--text); text-align: center; margin-bottom: 6px; }
+.welcome-sub   { font-size: 14px; color: var(--muted); text-align: center; line-height: 1.7; margin-bottom: 4px; }
+.welcome-streak{ font-size: 13px; color: var(--gold); margin-bottom: 4px; font-weight: 600; text-align: center; }
+.welcome-stats {
+  display: grid; grid-template-columns: 1fr 1fr 1fr;
+  gap: 8px; width: 100%; max-width: 360px; margin: 14px 0 20px;
+}
+.ws-card { background: var(--card); border: 1px solid var(--border); border-radius: 13px; padding: 10px 6px; text-align: center; }
+.ws-val  { font-size: 22px; font-weight: 700; margin-bottom: 2px; }
+.ws-lbl  { font-size: 10px; color: var(--muted); }
+.welcome-btns { display: flex; flex-direction: column; gap: 10px; width: 100%; max-width: 360px; }
+.wbtn {
+  height: 56px; border-radius: 16px; font-size: 16px; font-weight: 700;
+  border: none; cursor: pointer; font-family: inherit; transition: all .2s;
+  display: flex; align-items: center; justify-content: center; gap: 10px;
+}
+.wbtn:active { transform: scale(.97); }
+.wbtn-resume { background: linear-gradient(135deg, var(--accent), #5B54D4); color: #fff; box-shadow: 0 4px 18px rgba(123,110,246,.35); }
+.wbtn-review { background: rgba(245,200,66,.1); color: var(--gold); border: 1px solid rgba(245,200,66,.25); }
+.wbtn-new    { background: var(--card); color: var(--muted); border: 1px solid var(--border); font-size: 13px; height: 44px; border-radius: 12px; }
+
+/* ============================================================
+   설정 패널 — 한국어 보기/듣기 옵션 + 학습 설정
+   ============================================================ */
+.settings-overlay {
+  position: fixed; inset: 0; z-index: 200;
+  background: rgba(0,0,0,.85); backdrop-filter: blur(10px);
+  display: none; align-items: flex-end; justify-content: center;
+}
+.settings-overlay.open { display: flex; animation: fadeIn .25s ease; }
+.settings-panel {
+  width: 100%; max-width: 480px; background: #14141C;
+  border-radius: 24px 24px 0 0; padding: 20px 18px;
+  padding-bottom: max(env(safe-area-inset-bottom), 20px);
+}
+.settings-title { font-size: 16px; font-weight: 700; margin-bottom: 16px; display: flex; align-items: center; justify-content: space-between; }
+.settings-close { font-size: 18px; color: var(--muted); cursor: pointer; background: none; border: none; }
+.setting-row {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 14px 0; border-bottom: 1px solid var(--border);
+}
+.setting-row:last-child { border-bottom: none; }
+.setting-info  { flex: 1; }
+.setting-label { font-size: 14px; font-weight: 600; margin-bottom: 3px; }
+.setting-desc  { font-size: 12px; color: var(--muted); }
+.toggle-wrap   { position: relative; width: 50px; height: 28px; flex-shrink: 0; cursor: pointer; }
+.toggle-wrap input { opacity: 0; width: 0; height: 0; position: absolute; }
+.toggle-track  {
+  position: absolute; inset: 0; border-radius: 99px;
+  background: var(--border); transition: background .2s;
+}
+.toggle-wrap input:checked + .toggle-track { background: var(--accent); }
+.toggle-thumb  {
+  position: absolute; top: 3px; left: 3px;
+  width: 22px; height: 22px; border-radius: 50%;
+  background: #fff; transition: left .2s; box-shadow: 0 1px 4px rgba(0,0,0,.3);
+  pointer-events: none;
+}
+.toggle-wrap input:checked ~ .toggle-thumb { left: 25px; }
+/* 설정 버튼 (상단 바) */
+.settings-btn {
+  background: transparent; border: none; font-size: 16px; cursor: pointer; padding: 2px 4px;
+}
+
 /* ============================================================
    PWA 설치 안내 (iOS Safari용)
    ============================================================ */
@@ -779,6 +967,7 @@ body {
       <span class="pill pill-ok"  id="pill-ok">정답 0</span>
       <span class="pill pill-ng"  id="pill-ng">오답 0</span>
       <button class="voice-setting-btn" onclick="openVoicePanel()" title="음성 설정">🎙</button>
+      <button class="settings-btn" onclick="openSettings()" title="학습 설정">⚙️</button>
     </div>
   </div>
 
@@ -943,20 +1132,103 @@ body {
   </div>
 
   <!-- ======================================================
-    하단 모드 바 (탭 네비게이션)
+    MODE 5: 쉐도잉 — 영어 문장 듣고 따라 말하기
+    ====================================================== -->
+  <div class="mode-screen" id="screen-shadow">
+    <div class="shadow-progress">
+      <div class="shadow-prog-bar"><div class="shadow-prog-fill" id="shadow-prog-fill" style="width:0%"></div></div>
+      <span class="shadow-prog-num" id="shadow-prog-num">1 / 0</span>
+    </div>
+    <!-- 플레이리스트 재생 중 배너 -->
+    <div class="playlist-banner" id="playlist-banner" style="display:none;margin:8px 16px 0">
+      <div>
+        <div class="playlist-label" id="playlist-label">📋 연속 재생 중</div>
+        <div style="font-size:11px;color:var(--muted)" id="playlist-sub"></div>
+      </div>
+      <button class="playlist-stop" onclick="stopPlaylist()">■ 중지</button>
+    </div>
+    <div class="shadow-scroll" id="shadow-scroll">
+      <!-- 영어 문장 카드 -->
+      <div class="shadow-card">
+        <div class="shadow-card-label">🎯 따라 말할 문장</div>
+        <div class="shadow-en"  id="shadow-en">—</div>
+        <div class="shadow-ko"  id="shadow-ko"></div>
+        <div class="shadow-hint" id="shadow-hint"></div>
+      </div>
+      <!-- 파형 시각화 -->
+      <div class="shadow-wave" id="shadow-wave">
+        <div class="wave-bar" style="height:8px"></div><div class="wave-bar" style="height:14px"></div>
+        <div class="wave-bar" style="height:20px"></div><div class="wave-bar" style="height:12px"></div>
+        <div class="wave-bar" style="height:24px"></div><div class="wave-bar" style="height:10px"></div>
+        <div class="wave-bar" style="height:18px"></div><div class="wave-bar" style="height:22px"></div>
+        <div class="wave-bar" style="height:14px"></div><div class="wave-bar" style="height:8px"></div>
+        <div class="wave-bar" style="height:20px"></div><div class="wave-bar" style="height:16px"></div>
+        <div class="wave-bar" style="height:10px"></div><div class="wave-bar" style="height:24px"></div>
+        <div class="wave-bar" style="height:12px"></div>
+        <span style="font-size:11px;color:var(--muted);margin-left:6px" id="shadow-wave-label">준비 중</span>
+      </div>
+      <!-- 컨트롤 -->
+      <div class="shadow-controls">
+        <div class="shadow-row">
+          <!-- 모범 음성 재생 -->
+          <button class="shadow-btn sbtn-play" onclick="ShadowMode.playModel()">
+            🔊 <span>모범 듣기</span>
+          </button>
+          <!-- 내 음성 녹음 -->
+          <button class="shadow-btn sbtn-rec" id="shadow-rec-btn" onclick="ShadowMode.toggleRec()">
+            🎙 <span id="shadow-rec-label">따라 말하기</span>
+          </button>
+        </div>
+        <div class="shadow-row">
+          <!-- 내 녹음 재생 -->
+          <button class="shadow-btn sbtn-myplay" id="shadow-myplay-btn" disabled onclick="ShadowMode.playMine()">
+            ▶ <span>내 녹음</span>
+          </button>
+          <!-- 다음 문장 -->
+          <button class="shadow-btn sbtn-next" onclick="ShadowMode.next()">
+            다음 →
+          </button>
+        </div>
+        <!-- 비교 결과 안내 -->
+        <div class="shadow-compare" id="shadow-compare" style="display:none">
+          <span class="shadow-compare-icon" id="shadow-compare-icon">🎧</span>
+          <span id="shadow-compare-text">모범 음성과 내 녹음을 번갈아 들어보세요</span>
+        </div>
+      </div>
+      <!-- 속도 조절 -->
+      <div style="display:flex;align-items:center;gap:10px;background:var(--card);border:1px solid var(--border);border-radius:12px;padding:10px 14px">
+        <span style="font-size:12px;color:var(--muted);flex-shrink:0">🐢 속도</span>
+        <input type="range" min="0.5" max="1.2" step="0.1" value="0.8" style="flex:1"
+          oninput="ShadowMode.setRate(parseFloat(this.value));document.getElementById('shadow-rate-val').textContent=this.value+'x'">
+        <span style="font-size:12px;font-weight:700;color:var(--accent);width:34px" id="shadow-rate-val">0.8x</span>
+      </div>
+    </div>
+    <!-- 네비게이션 -->
+    <div style="display:flex;gap:8px;padding:8px 16px;padding-bottom:max(env(safe-area-inset-bottom),10px);flex-shrink:0;background:var(--bg);border-top:1px solid var(--border)">
+      <button onclick="ShadowMode.go(-1)" style="flex:0 0 48px;height:42px;border-radius:12px;background:var(--card);color:var(--muted);border:1px solid var(--border);font-size:16px;cursor:pointer;">←</button>
+      <button onclick="ShadowMode.goRandom()" style="flex:1;height:42px;border-radius:12px;background:var(--adim);color:var(--accent);border:1px solid rgba(123,110,246,.3);font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">🎲 랜덤</button>
+      <button onclick="ShadowMode.go(1)"  style="flex:0 0 48px;height:42px;border-radius:12px;background:var(--card);color:var(--muted);border:1px solid var(--border);font-size:16px;cursor:pointer;">→</button>
+    </div>
+  </div>
+
+  <!-- ======================================================
+    하단 모드 바 (5개 탭)
     ====================================================== -->
   <div class="modebar">
     <button class="modeitem active" id="mb-quiz" onclick="switchMode('quiz')">
-      <span class="mi-icon">✏️</span><span class="mi-label">영작퀴즈</span>
+      <span class="mi-icon">✏️</span><span class="mi-label">영작</span>
     </button>
     <button class="modeitem" id="mb-var" onclick="switchMode('var')">
-      <span class="mi-icon">🔄</span><span class="mi-label">변형연습</span>
+      <span class="mi-icon">🔄</span><span class="mi-label">변형</span>
+    </button>
+    <button class="modeitem" id="mb-shadow" onclick="switchMode('shadow')">
+      <span class="mi-icon">🎤</span><span class="mi-label">쉐도잉</span>
     </button>
     <button class="modeitem" id="mb-sb" onclick="switchMode('sb')">
-      <span class="mi-icon">🧱</span><span class="mi-label">문장늘리기</span>
+      <span class="mi-icon">🧱</span><span class="mi-label">늘리기</span>
     </button>
     <button class="modeitem" id="mb-opic" onclick="switchMode('opic')">
-      <span class="mi-icon">🎤</span><span class="mi-label">OPIc</span>
+      <span class="mi-icon">💬</span><span class="mi-label">OPIc</span>
     </button>
   </div>
 
@@ -1022,6 +1294,7 @@ body {
     <!-- DB 탭 -->
     <div class="db-tabs">
       <button class="dbtab-btn active" id="dbtab-source" onclick="switchDBTab('source')">DB 선택</button>
+      <button class="dbtab-btn"        id="dbtab-goals"  onclick="switchDBTab('goals')">학습목표</button>
       <button class="dbtab-btn"        id="dbtab-upload" onclick="switchDBTab('upload')">업로드</button>
       <button class="dbtab-btn"        id="dbtab-edit"   onclick="switchDBTab('edit')">편집</button>
     </div>
@@ -1047,6 +1320,32 @@ body {
           <button class="bk-btn bk-import" onclick="document.getElementById('backup-input').click()">⬆️ 백업 불러오기</button>
         </div>
         <input type="file" id="backup-input" accept=".json" style="display:none" onchange="importBackup(this.files[0])">
+      </div>
+    </div>
+    <!-- 학습목표 탭 -->
+    <div class="db-body" id="db-body-goals" style="display:none;flex-direction:column">
+      <button class="goal-new-btn" onclick="GoalManager.create()">＋ 새 학습목표 만들기</button>
+      <!-- 목표 선택 드롭다운 -->
+      <div style="display:flex;gap:8px;align-items:center">
+        <select id="goal-select" onchange="GoalManager.selectGoal(this.value)"
+          style="flex:1;height:36px;border-radius:9px;padding:0 10px;background:var(--card);border:1px solid var(--border);color:var(--text);font-size:13px;font-family:inherit;outline:none">
+          <option value="">-- 목표 선택 --</option>
+        </select>
+        <button onclick="GoalManager.deleteSelected()" style="height:36px;padding:0 12px;border-radius:9px;background:rgba(240,92,110,.1);color:var(--ng);border:1px solid rgba(240,92,110,.2);font-size:12px;cursor:pointer;font-family:inherit">삭제</button>
+      </div>
+      <!-- 선택된 목표 정보 + 연속재생 -->
+      <div id="goal-detail" style="display:none;flex-direction:column;gap:8px">
+        <div style="display:flex;gap:8px">
+          <button onclick="GoalManager.playAll()" style="flex:1;height:40px;border-radius:10px;background:var(--adim);color:var(--accent);border:1px solid rgba(123,110,246,.3);font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">📢 연속 읽기</button>
+          <button onclick="GoalManager.shadowAll()" style="flex:1;height:40px;border-radius:10px;background:rgba(62,201,138,.1);color:var(--ok);border:1px solid rgba(62,201,138,.25);font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">🎤 쉐도잉</button>
+        </div>
+        <!-- 문장 리스트 -->
+        <div id="goal-sentence-list" style="overflow-y:auto;max-height:300px"></div>
+        <!-- 현재 DB에서 문장 추가 -->
+        <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:12px">
+          <div style="font-size:12px;color:var(--muted);margin-bottom:8px">현재 문제를 이 목표에 추가</div>
+          <button onclick="GoalManager.addCurrentSentence()" style="width:100%;height:38px;border-radius:10px;background:var(--adim);color:var(--accent);border:1px solid rgba(123,110,246,.3);font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">＋ 현재 문장 추가 (<span id="goal-add-preview" style="font-size:11px"></span>)</button>
+        </div>
       </div>
     </div>
     <!-- 업로드 탭 -->
@@ -1127,11 +1426,120 @@ body {
     <div class="pwa-title">📱 홈 화면에 추가하기</div>
     <div class="pwa-desc">홈 화면에 추가하면 앱처럼 사용하고<br>오프라인에서도 학습할 수 있어요!</div>
     <div class="pwa-steps">
-      <div class="pwa-step"><span class="pwa-step-icon">1️⃣</span>Safari 하단 공유 버튼 탭</div>
-      <div class="pwa-step"><span class="pwa-step-icon">2️⃣</span>"홈 화면에 추가" 선택</div>
-      <div class="pwa-step"><span class="pwa-step-icon">3️⃣</span>"추가" 탭</div>
+      <div class="pwa-step"><span class="pwa-step-icon">1️⃣</span>Safari 우측 하단 <b>점 세 개(···) 아이콘</b> 탭</div>
+      <div class="pwa-step"><span class="pwa-step-icon">2️⃣</span><b>공유</b> 버튼 탭</div>
+      <div class="pwa-step"><span class="pwa-step-icon">3️⃣</span><b>홈 화면에 추가</b> 선택</div>
     </div>
     <button class="pwa-close" onclick="closePwa()">나중에</button>
+  </div>
+</div>
+
+<!-- ======================================================
+  환영 화면 — 재진입 시 이어하기 / 핵심 복습 / 처음부터
+  ====================================================== -->
+<div class="welcome-overlay" id="welcome-overlay">
+  <div class="welcome-logo">📚</div>
+  <div class="welcome-title">다시 오셨군요!</div>
+  <div class="welcome-streak" id="welcome-streak"></div>
+  <div class="welcome-sub" id="welcome-sub">어제의 학습을 이어서 시작해볼까요?</div>
+  <!-- 학습 통계 요약 -->
+  <div class="welcome-stats">
+    <div class="ws-card">
+      <div class="ws-val" id="ws-answered" style="color:var(--accent)">0</div>
+      <div class="ws-lbl">완료 문장</div>
+    </div>
+    <div class="ws-card">
+      <div class="ws-val" id="ws-due" style="color:var(--gold)">0</div>
+      <div class="ws-lbl">오늘 복습</div>
+    </div>
+    <div class="ws-card">
+      <div class="ws-val" id="ws-accuracy" style="color:var(--ok)">0%</div>
+      <div class="ws-lbl">정답률</div>
+    </div>
+  </div>
+  <!-- 선택 버튼 -->
+  <div class="welcome-btns">
+    <button class="wbtn wbtn-resume" onclick="welcomeAction('resume')">
+      ▶ 이어하기 <span id="welcome-resume-pos" style="font-size:13px;opacity:.8"></span>
+    </button>
+    <button class="wbtn wbtn-review" onclick="welcomeAction('review')">
+      🔁 핵심 복습하기 <span id="welcome-due-count" style="font-size:13px;opacity:.8"></span>
+    </button>
+    <button class="wbtn wbtn-new" onclick="welcomeAction('new')">
+      처음부터 다시 하기
+    </button>
+  </div>
+</div>
+
+<!-- ======================================================
+  설정 패널 — 학습 옵션
+  ====================================================== -->
+<div class="settings-overlay" id="settings-overlay" onclick="if(event.target===this)closeSettings()">
+  <div class="settings-panel">
+    <div class="settings-title">
+      ⚙️ 학습 설정
+      <button class="settings-close" onclick="closeSettings()">✕</button>
+    </div>
+    <!-- 한국어 문장 보기 -->
+    <div class="setting-row">
+      <div class="setting-info">
+        <div class="setting-label">한국어 문장 보기</div>
+        <div class="setting-desc">문제를 볼 때 한국어 문장 표시</div>
+      </div>
+      <label class="toggle-wrap">
+        <input type="checkbox" id="set-show-ko" checked onchange="saveSettings()">
+        <div class="toggle-track"></div>
+        <div class="toggle-thumb"></div>
+      </label>
+    </div>
+    <!-- 한국어 자동 음성 -->
+    <div class="setting-row">
+      <div class="setting-info">
+        <div class="setting-label">한국어 자동 음성</div>
+        <div class="setting-desc">문제 전환 시 한국어 자동 읽기</div>
+      </div>
+      <label class="toggle-wrap">
+        <input type="checkbox" id="set-auto-ko" onchange="saveSettings()">
+        <div class="toggle-track"></div>
+        <div class="toggle-thumb"></div>
+      </label>
+    </div>
+    <!-- 정답 자동 음성 -->
+    <div class="setting-row">
+      <div class="setting-info">
+        <div class="setting-label">정답 자동 음성</div>
+        <div class="setting-desc">정답 시 영어 자동 읽기</div>
+      </div>
+      <label class="toggle-wrap">
+        <input type="checkbox" id="set-auto-en" checked onchange="saveSettings()">
+        <div class="toggle-track"></div>
+        <div class="toggle-thumb"></div>
+      </label>
+    </div>
+    <!-- 힌트 보기 -->
+    <div class="setting-row">
+      <div class="setting-info">
+        <div class="setting-label">힌트(동사 카테고리) 보기</div>
+        <div class="setting-desc">문제 상단 힌트 태그 표시</div>
+      </div>
+      <label class="toggle-wrap">
+        <input type="checkbox" id="set-show-hint" checked onchange="saveSettings()">
+        <div class="toggle-track"></div>
+        <div class="toggle-thumb"></div>
+      </label>
+    </div>
+    <!-- 정답 보기 후 SRS 기록 -->
+    <div class="setting-row">
+      <div class="setting-info">
+        <div class="setting-label">정답 보기 = 오답 처리</div>
+        <div class="setting-desc">정답 버튼 사용 시 틀린 것으로 기록</div>
+      </div>
+      <label class="toggle-wrap">
+        <input type="checkbox" id="set-showans-wrong" checked onchange="saveSettings()">
+        <div class="toggle-track"></div>
+        <div class="toggle-thumb"></div>
+      </label>
+    </div>
   </div>
 </div>
 
@@ -2278,7 +2686,13 @@ function render() {
   const q   = db[idx];
   if (!q) return;
 
-  // 힌트 표시
+  // 한국어 카드 표시/숨김 (설정에 따라)
+  const kcard = Utils.qs('.kcard');
+  if (kcard) kcard.style.display = appSettings.showKo ? '' : 'none';
+  // 힌트 표시/숨김
+  const htag = Utils.qs('.htag');
+  if (htag) htag.style.display = appSettings.showHint ? '' : 'none';
+  // 힌트 텍스트
   const ht = Utils.el('htxt'); if (ht) ht.textContent = q[2] || '';
   // 한국어 문장 표시
   const kt = Utils.el('ktxt'); if (kt) kt.textContent = q[0] || '';
@@ -2307,12 +2721,18 @@ function render() {
   updatePills();
   // 스크롤 맨 위로
   const sc = Utils.el('scroll'); if (sc) sc.scrollTop = 0;
+  // 현재 위치 저장 (재진입 복원용)
+  savePosition();
+  // 한국어 자동 읽기 (설정 ON인 경우)
+  if (appSettings.autoKo) setTimeout(() => speakKo(), 300);
 }
 
 /* 문제 이동 (앞/뒤 순환) */
 function go(n) {
   const max = viewList.length;
   cur = ((n % max) + max) % max;
+  // 쉐도잉 모드에 현재 위치 동기화 (같은 문장 쉐도잉 가능)
+  ShadowMode.idx = viewList[cur] ?? 0;
   render();
 }
 
@@ -2327,14 +2747,17 @@ function showAns() {
   const at = Utils.el('atxt');
   if (at) { at.className = 'atxt'; at.textContent = q[1]; }
 
-  // SRS: 정답 보기 = 스스로 못 풀었음 → wrong 처리 (단, 이미 답변한 문제는 중복 기록 방지)
+  // SRS: 정답 보기 처리 (이미 채점한 문장은 중복 기록 방지)
   const s = SrsSystem.getItem(idx);
   const alreadyGraded = lastGradedIdx === idx;
   if (!alreadyGraded) {
-    SrsSystem.record(idx, 'wrong');
-    sessionNg++;
+    if (appSettings.showAnsWrong) {
+      // 설정 ON: 오답으로 기록 (스스로 못 풀었으므로)
+      SrsSystem.record(idx, 'wrong');
+      sessionNg++;
+      updatePills();
+    }
     lastGradedIdx = idx;
-    updatePills();
   }
 
   // SRS 정보 표시
@@ -2437,8 +2860,8 @@ function grade(userAns) {
   // AI 피드백 버튼 (오답/부분정답 시)
   const ab = Utils.el('ai-btn'); if (ab) { ab.style.display = !correct ? 'flex' : 'none'; ab.disabled = false; }
 
-  // 정답 시 TTS
-  if (correct) speakEn(q[1]);
+  // 정답 시 TTS (설정 ON인 경우)
+  if (correct && appSettings.autoEn) speakEn(q[1]);
   // 피드백 영역으로 스크롤
   if (fb) setTimeout(() => fb.scrollIntoView({ behavior:'smooth', block:'nearest' }), 100);
   // 스트릭/XP 갱신
@@ -2578,6 +3001,7 @@ function checkOnboarding() {
 function closeOnboarding() {
   const ob = Utils.el('ob-overlay'); if (ob) ob.classList.remove('open');
   localStorage.setItem('onboarded_v1', '1');
+  // 온보딩 완료 후 바로 학습 시작 (환영 화면 스킵)
 }
 
 /* ============================================================
@@ -2783,7 +3207,555 @@ function renderGrid() {
   if (pt) pt.textContent = `문제 목록 (${viewList.length}개 · 완료 ${answered}/${db.length})`;
 }
 
-/* 타이핑 모드 토글 - STT 미지원 환경 대비 */
+/* ============================================================
+   학습 설정 (Settings) — 한국어 보기/듣기, 힌트 등
+   localStorage에 저장하여 재진입 시에도 유지
+   ============================================================ */
+const SETTINGS_KEY = 'app_settings_v1';
+let appSettings = {
+  showKo:        true,   // 한국어 문장 표시 여부
+  autoKo:        false,  // 문제 전환 시 한국어 자동 TTS
+  autoEn:        true,   // 정답 시 영어 자동 TTS
+  showHint:      true,   // 힌트 태그 표시
+  showAnsWrong:  true,   // 정답 보기 = 오답 처리
+};
+
+/* 설정 로드 (앱 시작 시 호출) */
+function loadSettings() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(SETTINGS_KEY) || 'null');
+    if (saved) appSettings = { ...appSettings, ...saved };
+  } catch(e) {}
+  applySettings();
+}
+
+/* 설정 저장 (각 토글 변경 시 호출) */
+function saveSettings() {
+  appSettings.showKo       = Utils.el('set-show-ko')?.checked ?? true;
+  appSettings.autoKo       = Utils.el('set-auto-ko')?.checked ?? false;
+  appSettings.autoEn       = Utils.el('set-auto-en')?.checked ?? true;
+  appSettings.showHint     = Utils.el('set-show-hint')?.checked ?? true;
+  appSettings.showAnsWrong = Utils.el('set-showans-wrong')?.checked ?? true;
+  localStorage.setItem(SETTINGS_KEY, JSON.stringify(appSettings));
+  applySettings();
+}
+
+/* 설정 적용 — UI 갱신 */
+function applySettings() {
+  // 토글 체크박스 동기화
+  const ids = {
+    'set-show-ko':       appSettings.showKo,
+    'set-auto-ko':       appSettings.autoKo,
+    'set-auto-en':       appSettings.autoEn,
+    'set-show-hint':     appSettings.showHint,
+    'set-showans-wrong': appSettings.showAnsWrong,
+  };
+  Object.entries(ids).forEach(([id, val]) => {
+    const el = Utils.el(id); if (el) el.checked = val;
+  });
+  // 현재 문제 화면에 즉시 반영
+  const kcard  = Utils.qs('.kcard');
+  const htag   = Utils.qs('.htag');
+  if (kcard) kcard.style.display = appSettings.showKo ? '' : 'none';
+  if (htag)  htag.style.display  = appSettings.showHint ? '' : 'none';
+}
+
+function openSettings() {
+  const so = Utils.el('settings-overlay');
+  if (so) so.classList.add('open');
+}
+function closeSettings() {
+  const so = Utils.el('settings-overlay');
+  if (so) so.classList.remove('open');
+}
+
+/* ============================================================
+   학습 위치 저장/복원 — 재진입 시 마지막 문제로 돌아가기
+   ============================================================ */
+const POS_KEY = 'last_position_v1';
+
+/* 현재 위치 저장 (문제 이동할 때마다 호출) */
+function savePosition() {
+  const db  = getActiveDB();
+  const idx = viewList[cur] ?? 0;
+  const data = {
+    rawIdx:   idx,          // 실제 DB 인덱스
+    curPos:   cur,          // viewList 내 위치
+    tab:      curTab,       // 탭 (all/due/wrong)
+    level:    quizLevel,    // 레벨 필터
+    date:     Utils.today(),
+  };
+  localStorage.setItem(POS_KEY, JSON.stringify(data));
+}
+
+/* 저장된 위치 불러오기 */
+function loadPosition() {
+  try { return JSON.parse(localStorage.getItem(POS_KEY) || 'null'); }
+  catch(e) { return null; }
+}
+
+/* ============================================================
+   환영 화면 (Welcome Screen) — 재진입 시 학습 상황 요약 + 선택
+   처음 방문: 온보딩 표시
+   재방문: 환영 화면 표시 (이어하기 / 핵심 복습 / 처음부터)
+   ============================================================ */
+function showWelcome() {
+  SrsSystem.load(); // 데이터 먼저 로드
+
+  const allS     = Object.values(srsData);
+  const answered = allS.filter(s => s.totalAnswers > 0).length;
+  const dueItems = Object.keys(srsData).filter(k => SrsSystem.isDue(parseInt(k)));
+  const correct  = allS.filter(s => s.correct > 0).length;
+  const wrong    = allS.filter(s => s.wrong   > 0).length;
+  const accuracy = (correct + wrong) > 0
+    ? Math.round(correct / (correct + wrong) * 100) : 0;
+
+  // 통계 표시
+  const wsa = Utils.el('ws-answered'); if (wsa) wsa.textContent = answered;
+  const wsd = Utils.el('ws-due');      if (wsd) wsd.textContent = dueItems.length;
+  const wac = Utils.el('ws-accuracy'); if (wac) wac.textContent = accuracy + '%';
+
+  // 스트릭 표시
+  const streak = Progress.getStreak();
+  const ws = Utils.el('welcome-streak');
+  if (ws) ws.textContent = streak.days > 0 ? `🔥 ${streak.days}일 연속 학습 중!` : '';
+
+  // 이어하기 버튼에 마지막 위치 정보 표시
+  const pos = loadPosition();
+  const rp  = Utils.el('welcome-resume-pos');
+  if (rp && pos) {
+    const db = getActiveDB();
+    const q  = db[pos.rawIdx];
+    rp.textContent = q ? `— ${pos.rawIdx + 1}번 (${q[2]?.split('·')[0].trim() || ''})` : '';
+  }
+
+  // 복습 건수 표시
+  const dc = Utils.el('welcome-due-count');
+  if (dc) dc.textContent = dueItems.length > 0 ? `(${dueItems.length}개)` : '';
+
+  // 서브 텍스트
+  const sub = Utils.el('welcome-sub');
+  if (sub) {
+    if (dueItems.length > 0) sub.textContent = `오늘 복습할 문장 ${dueItems.length}개가 있어요!`;
+    else if (answered > 0)   sub.textContent = `${answered}문장 완료! 계속 이어가볼까요?`;
+    else                      sub.textContent = '처음 방문이시군요. 바로 시작해볼까요?';
+  }
+
+  // 이어하기 버튼 비활성화 (저장 위치 없으면)
+  const resumeBtn = Utils.qs('.wbtn-resume');
+  if (resumeBtn && !pos) { resumeBtn.style.opacity = '0.4'; resumeBtn.style.pointerEvents = 'none'; }
+
+  Utils.el('welcome-overlay')?.classList.add('open');
+}
+
+/* 환영 화면 선택 처리 */
+function welcomeAction(action) {
+  Utils.el('welcome-overlay')?.classList.remove('open');
+
+  if (action === 'resume') {
+    /* 이어하기: 마지막 위치 복원 */
+    const pos = loadPosition();
+    if (pos) {
+      // 탭/레벨 복원
+      if (pos.tab)   { curTab = pos.tab; ['all','due','wrong'].forEach(t => { const el = Utils.el('tab-'+t); if (el) el.classList.toggle('active', t===pos.tab); }); }
+      if (pos.level) { quizLevel = pos.level; setQuizLevel(pos.level); }
+      buildViewList();
+      // 마지막 위치로 이동 (rawIdx로 viewList 내 위치 탐색)
+      const idx = viewList.indexOf(pos.rawIdx);
+      cur = idx >= 0 ? idx : Math.min(pos.curPos, viewList.length - 1);
+    }
+    render();
+
+  } else if (action === 'review') {
+    /* 핵심 복습: 오늘 복습 탭으로 전환 */
+    switchTab('due');
+    go(0);
+
+  } else {
+    /* 처음부터: 전체 탭, 0번 */
+    curTab = 'all'; quizLevel = 'all';
+    setQuizLevel('all');
+    switchTab('all');
+    go(0);
+  }
+}
+
+/* ============================================================
+   오답 횟수 → 시각화 배지
+   0-4:🟢 5-9:🟡 10-14:🟠 15+:🔴
+   ============================================================ */
+function wrongBadge(wrongCount) {
+  if (wrongCount === 0)      return '<span class="wrong-badge wb-safe">🟢 완벽</span>';
+  if (wrongCount <= 4)       return `<span class="wrong-badge wb-safe">🟢 ${wrongCount}회</span>`;
+  if (wrongCount <= 9)       return `<span class="wrong-badge wb-caution">🟡 ${wrongCount}회</span>`;
+  if (wrongCount <= 14)      return `<span class="wrong-badge wb-warning">🟠 ${wrongCount}회</span>`;
+  return                            `<span class="wrong-badge wb-danger">🔴 ${wrongCount}회</span>`;
+}
+
+/* ============================================================
+   ShadowMode — 쉐도잉 모드
+   ① 모범 TTS 재생 → ② 사용자 녹음 → ③ 비교 청취
+   MediaRecorder API로 실제 오디오 캡처
+   ============================================================ */
+const ShadowMode = {
+  idx:      0,       // DB 내 현재 문장 인덱스
+  rate:     0.8,     // TTS 재생 속도
+  blob:     null,    // 녹음된 오디오 Blob
+  audioUrl: null,    // 재생용 Object URL
+  recorder: null,    // MediaRecorder 인스턴스
+  chunks:   [],      // 녹음 청크
+  isRec:    false,   // 녹음 중 여부
+  waveTimer:null,    // 파형 애니메이션 타이머
+  playlistMode: false,   // 연속 재생 모드
+  playlistItems: [],
+  playlistPos: 0,
+
+  /* 초기화 */
+  init() {
+    if (!this._initialized) {
+      this.idx = viewList[cur] ?? 0;
+      this._initialized = true;
+    }
+    this.renderSentence();
+  },
+
+  /* 현재 문장을 화면에 표시 */
+  renderSentence() {
+    const db = getActiveDB();
+    const q  = db[this.idx] || ['','',''];
+    Utils.el('shadow-en').textContent   = q[1] || '—';
+    Utils.el('shadow-ko').textContent   = q[0] || '';
+    Utils.el('shadow-hint').textContent = q[2] || '';
+
+    // 진행 표시 (전체 DB 기준)
+    const total = db.length;
+    const pct   = total > 1 ? (this.idx / (total - 1)) * 100 : 100;
+    const pf = Utils.el('shadow-prog-fill'); if (pf) pf.style.width = pct + '%';
+    const pn = Utils.el('shadow-prog-num');  if (pn) pn.textContent = `${this.idx + 1} / ${total}`;
+
+    // 녹음 초기화
+    this.blob = null;
+    if (this.audioUrl) { URL.revokeObjectURL(this.audioUrl); this.audioUrl = null; }
+    const myBtn = Utils.el('shadow-myplay-btn');
+    if (myBtn) myBtn.disabled = true;
+    const cmp = Utils.el('shadow-compare'); if (cmp) cmp.style.display = 'none';
+    this.setWaveLabel('탭하여 녹음 시작');
+    this.stopWaveAnim();
+  },
+
+  /* 이전/다음 이동 */
+  go(dir) {
+    const db = getActiveDB();
+    this.idx = ((this.idx + dir) % db.length + db.length) % db.length;
+    this.renderSentence();
+  },
+
+  /* 랜덤 이동 */
+  goRandom() {
+    const db = getActiveDB();
+    this.idx = Math.floor(Math.random() * db.length);
+    this.renderSentence();
+  },
+
+  /* 모범 TTS 재생 */
+  playModel() {
+    const db = getActiveDB();
+    const q  = db[this.idx];
+    if (!q) return;
+    this.setWaveLabel('🔊 모범 음성 재생 중...');
+    this.startWaveAnim('var(--accent)');
+    const u = new SpeechSynthesisUtterance(q[1]);
+    u.lang  = 'en-US'; u.rate = this.rate;
+    const enVoices = speechVoices.filter(v => /en/i.test(v.lang));
+    if (enVoices[selectedVoiceIdx]) u.voice = enVoices[selectedVoiceIdx];
+    else if (enVoices[0])           u.voice = enVoices[0];
+    u.onend = () => { this.setWaveLabel('녹음 버튼을 눌러 따라 말하세요'); this.stopWaveAnim(); };
+    speechSynthesis.cancel();
+    speechSynthesis.speak(u);
+
+    // 플레이리스트 모드: 재생 후 자동 다음
+    if (this.playlistMode && !this.isRec) {
+      const dur = (q[1].split(' ').length / 2) * (1 / this.rate) * 1000 + 1200;
+      setTimeout(() => this.playlistNext(), dur);
+    }
+  },
+
+  /* 속도 설정 */
+  setRate(r) { this.rate = r; },
+
+  /* 녹음 토글 */
+  async toggleRec() {
+    if (this.isRec) this.stopRec();
+    else await this.startRec();
+  },
+
+  /* 녹음 시작 */
+  async startRec() {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      this.chunks  = [];
+      this.recorder = new MediaRecorder(stream);
+      this.recorder.ondataavailable = e => { if (e.data.size > 0) this.chunks.push(e.data); };
+      this.recorder.onstop = () => {
+        this.blob = new Blob(this.chunks, { type: 'audio/webm' });
+        this.audioUrl = URL.createObjectURL(this.blob);
+        stream.getTracks().forEach(t => t.stop());
+        const myBtn = Utils.el('shadow-myplay-btn'); if (myBtn) myBtn.disabled = false;
+        const cmp = Utils.el('shadow-compare');
+        if (cmp) {
+          cmp.style.display = 'flex';
+          Utils.el('shadow-compare-icon').textContent = '🎧';
+          Utils.el('shadow-compare-text').textContent = '모범 듣기 → 내 녹음 순서로 비교해보세요!';
+        }
+        this.isRec = false;
+        const btn = Utils.el('shadow-rec-btn');
+        if (btn) { btn.classList.remove('recording'); Utils.el('shadow-rec-label').textContent = '따라 말하기'; }
+        this.setWaveLabel('녹음 완료! 내 녹음을 들어보세요');
+        this.stopWaveAnim();
+      };
+      this.recorder.start();
+      this.isRec = true;
+      const btn = Utils.el('shadow-rec-btn');
+      if (btn) { btn.classList.add('recording'); Utils.el('shadow-rec-label').textContent = '● 녹음 중지'; }
+      this.setWaveLabel('🎙 녹음 중...');
+      this.startWaveAnim('var(--ng)');
+    } catch(e) {
+      alert('마이크 권한이 필요합니다.\n설정 → 사파리/크롬 → 마이크 허용');
+    }
+  },
+
+  /* 녹음 중지 */
+  stopRec() {
+    if (this.recorder && this.recorder.state !== 'inactive') this.recorder.stop();
+  },
+
+  /* 내 녹음 재생 */
+  playMine() {
+    if (!this.audioUrl) return;
+    this.setWaveLabel('▶ 내 녹음 재생 중...');
+    this.startWaveAnim('var(--ok)');
+    const audio = new Audio(this.audioUrl);
+    audio.onended = () => { this.setWaveLabel('비교 완료'); this.stopWaveAnim(); };
+    audio.play();
+  },
+
+  /* 다음 문장 */
+  next() { this.go(1); },
+
+  /* 파형 라벨 */
+  setWaveLabel(txt) { const el = Utils.el('shadow-wave-label'); if (el) el.textContent = txt; },
+
+  /* 파형 애니메이션 */
+  startWaveAnim(color) {
+    this.stopWaveAnim();
+    const bars = Utils.qsa('.wave-bar');
+    this.waveTimer = setInterval(() => {
+      bars.forEach(b => {
+        const h = 6 + Math.random() * 26;
+        b.style.height = h + 'px';
+        b.style.background = color;
+        b.style.opacity = 0.4 + Math.random() * 0.6;
+      });
+    }, 80);
+  },
+  stopWaveAnim() {
+    if (this.waveTimer) { clearInterval(this.waveTimer); this.waveTimer = null; }
+    Utils.qsa('.wave-bar').forEach(b => { b.style.height = '8px'; b.style.opacity = '0.3'; });
+  },
+
+  /* 플레이리스트 연속 재생 */
+  startPlaylist(items, label) {
+    this.playlistItems = items;
+    this.playlistPos   = 0;
+    this.playlistMode  = true;
+    const banner = Utils.el('playlist-banner'); if (banner) banner.style.display = 'flex';
+    const lbl = Utils.el('playlist-label'); if (lbl) lbl.textContent = `📋 ${label}`;
+    switchMode('shadow');
+    this.playlistNext();
+  },
+  playlistNext() {
+    if (!this.playlistMode || this.playlistPos >= this.playlistItems.length) {
+      this.stopPlaylist(); return;
+    }
+    this.idx = this.playlistItems[this.playlistPos++];
+    const sub = Utils.el('playlist-sub');
+    if (sub) sub.textContent = `${this.playlistPos} / ${this.playlistItems.length}`;
+    this.renderSentence();
+    setTimeout(() => this.playModel(), 400);
+  },
+  stopPlaylist() {
+    this.playlistMode = false;
+    speechSynthesis.cancel();
+    const banner = Utils.el('playlist-banner'); if (banner) banner.style.display = 'none';
+    this.stopWaveAnim();
+    this.setWaveLabel('준비 중');
+  },
+};
+function stopPlaylist() { ShadowMode.stopPlaylist(); }
+
+/* ============================================================
+   GoalManager — 학습목표 관리
+   목표 생성/삭제, 문장 추가/이동/연속재생/쉐도잉
+   ============================================================ */
+const GoalManager = {
+  GOALS_KEY: 'study_goals_v2',
+  goals: [],      // [{id, name, color, items:[rawIdx,...]}]
+  selectedId: null,
+  COLORS: ['#7B6EF6','#3EC98A','#F5C842','#F05C6E','#3ECAC9','#C97A3E'],
+
+  load() {
+    try { this.goals = JSON.parse(localStorage.getItem(this.GOALS_KEY) || '[]'); }
+    catch(e) { this.goals = []; }
+  },
+  save() { localStorage.setItem(this.GOALS_KEY, JSON.stringify(this.goals)); },
+
+  /* 새 목표 생성 */
+  create() {
+    const name = prompt('학습목표 이름을 입력하세요:', '목표 ' + (this.goals.length + 1));
+    if (!name || !name.trim()) return;
+    const newGoal = {
+      id:    Date.now().toString(),
+      name:  name.trim(),
+      color: this.COLORS[this.goals.length % this.COLORS.length],
+      items: [],
+    };
+    this.goals.push(newGoal);
+    this.save();
+    this.renderGoalsTab();
+    this.selectGoal(newGoal.id);
+  },
+
+  /* 목표 선택 */
+  selectGoal(id) {
+    this.selectedId = id;
+    const sel = Utils.el('goal-select'); if (sel) sel.value = id;
+    const detail = Utils.el('goal-detail');
+    if (detail) detail.style.display = id ? 'flex' : 'none';
+    if (id) this.renderGoalSentences(id);
+    // 현재 퀴즈 문장 미리보기
+    const db = getActiveDB();
+    const q  = db[viewList[cur] ?? 0];
+    const preview = Utils.el('goal-add-preview');
+    if (preview && q) preview.textContent = q[0]?.slice(0, 15) + '...';
+  },
+
+  /* 목표 삭제 */
+  deleteSelected() {
+    if (!this.selectedId) return;
+    const goal = this.goals.find(g => g.id === this.selectedId);
+    if (!goal || !confirm(`"${goal.name}"을 삭제할까요?`)) return;
+    this.goals = this.goals.filter(g => g.id !== this.selectedId);
+    this.selectedId = null;
+    this.save();
+    this.renderGoalsTab();
+  },
+
+  /* 현재 문장을 선택된 목표에 추가 */
+  addCurrentSentence() {
+    if (!this.selectedId) { alert('먼저 학습목표를 선택해주세요.'); return; }
+    const rawIdx = viewList[cur] ?? 0;
+    const goal   = this.goals.find(g => g.id === this.selectedId);
+    if (!goal) return;
+    if (goal.items.includes(rawIdx)) { alert('이미 이 목표에 있는 문장입니다.'); return; }
+    goal.items.push(rawIdx);
+    this.save();
+    this.renderGoalSentences(this.selectedId);
+  },
+
+  /* 목표 내 문장 목록 렌더 */
+  renderGoalSentences(goalId) {
+    const goal = this.goals.find(g => g.id === goalId);
+    const container = Utils.el('goal-sentence-list'); if (!container || !goal) return;
+    const db = getActiveDB();
+    if (!goal.items.length) {
+      container.innerHTML = '<div style="font-size:13px;color:var(--muted);text-align:center;padding:16px">아직 문장이 없습니다.<br>퀴즈에서 문장을 추가하세요.</div>';
+      return;
+    }
+    const otherGoals = this.goals.filter(g => g.id !== goalId);
+    container.innerHTML = goal.items.map((rawIdx, pos) => {
+      const q  = db[rawIdx] || ['','',''];
+      const s  = SrsSystem.getItem(rawIdx);
+      const wb = wrongBadge(s.wrong);
+      const moveOpts = otherGoals.map(g => `<option value="${g.id}">${g.name}</option>`).join('');
+      return `<div class="goal-sentence-item">
+        <span class="gsi-num">${pos + 1}</span>
+        <div class="gsi-body">
+          <div class="gsi-en">${q[1]}</div>
+          <div class="gsi-ko">${q[0]}</div>
+        </div>
+        ${wb}
+        <button class="gsi-move" onclick="GoalManager.moveSentence('${goalId}',${rawIdx})" title="다른 목표로 이동">↗</button>
+        <button class="gsi-del"  onclick="GoalManager.removeSentence('${goalId}',${rawIdx})">✕</button>
+      </div>`;
+    }).join('');
+  },
+
+  /* 문장을 다른 목표로 이동 */
+  moveSentence(fromGoalId, rawIdx) {
+    const otherGoals = this.goals.filter(g => g.id !== fromGoalId);
+    if (!otherGoals.length) { alert('이동할 다른 목표가 없습니다. 먼저 목표를 추가하세요.'); return; }
+    const opts = otherGoals.map((g,i) => `${i+1}. ${g.name}`).join('\n');
+    const input = prompt(`어느 목표로 이동할까요?\n\n${opts}\n\n번호를 입력하세요:`);
+    if (!input) return;
+    const num = parseInt(input) - 1;
+    if (num < 0 || num >= otherGoals.length) return;
+    const toGoal   = otherGoals[num];
+    const fromGoal = this.goals.find(g => g.id === fromGoalId);
+    if (!fromGoal) return;
+    // 이동: 원래 목표에서 제거 + 대상 목표에 추가
+    fromGoal.items = fromGoal.items.filter(i => i !== rawIdx);
+    if (!toGoal.items.includes(rawIdx)) toGoal.items.push(rawIdx);
+    this.save();
+    this.renderGoalSentences(fromGoalId);
+  },
+
+  /* 목표에서 문장 제거 */
+  removeSentence(goalId, rawIdx) {
+    const goal = this.goals.find(g => g.id === goalId); if (!goal) return;
+    goal.items = goal.items.filter(i => i !== rawIdx);
+    this.save();
+    this.renderGoalSentences(goalId);
+  },
+
+  /* 목표 전체 연속 TTS 읽기 */
+  playAll() {
+    const goal = this.goals.find(g => g.id === this.selectedId);
+    if (!goal || !goal.items.length) { alert('문장이 없습니다.'); return; }
+    closeDB();
+    ShadowMode.startPlaylist([...goal.items], `${goal.name} 연속 읽기`);
+  },
+
+  /* 목표 전체 쉐도잉 시작 */
+  shadowAll() {
+    const goal = this.goals.find(g => g.id === this.selectedId);
+    if (!goal || !goal.items.length) { alert('문장이 없습니다.'); return; }
+    closeDB();
+    ShadowMode.playlistMode = false;
+    ShadowMode.idx = goal.items[0];
+    ShadowMode.playlistItems = [...goal.items];
+    ShadowMode.playlistPos = 1;
+    switchMode('shadow');
+    ShadowMode.renderSentence();
+    alert(`💡 쉐도잉 모드\n① 모범 듣기 → ② 따라 말하기 → ③ 내 녹음 듣기\n순서로 연습하세요!`);
+  },
+
+  /* 탭 전환 시 목표 목록 렌더 */
+  renderGoalsTab() {
+    const sel = Utils.el('goal-select'); if (!sel) return;
+    sel.innerHTML = '<option value="">-- 목표 선택 --</option>' +
+      this.goals.map(g => `<option value="${g.id}" style="color:${g.color}">${g.name} (${g.items.length}문장)</option>`).join('');
+    if (this.selectedId) {
+      sel.value = this.selectedId;
+      this.selectGoal(this.selectedId);
+    } else {
+      const detail = Utils.el('goal-detail'); if (detail) detail.style.display = 'none';
+    }
+  },
+};
+
+/* ============================================================
+   모드 전환 업데이트 — shadow 모드 포함
+   ============================================================ */
 let typeModeOn = false;
 function toggleTypeMode() {
   typeModeOn = !typeModeOn;
@@ -2804,20 +3776,20 @@ function gradeTyped(text) {
 }
 
 /* ============================================================
-   모드 전환
+   모드 전환 — 5개 탭 (quiz/var/sb/opic/shadow)
    ============================================================ */
 function switchMode(mode) {
-  ['quiz','var','sb','opic'].forEach(m => {
+  ['quiz','var','sb','opic','shadow'].forEach(m => {
     const scr = Utils.el('screen-' + m);
     const btn = Utils.el('mb-' + m);
     if (scr) scr.classList.toggle('active', m === mode);
     if (btn) btn.classList.toggle('active', m === mode);
   });
-  // 각 모드 전환 시 초기화 (quiz는 기존 상태 유지하며 재렌더)
-  if (mode === 'quiz') render();
-  if (mode === 'var')  VarMode.init();
-  if (mode === 'sb')   SBMode.init();
-  if (mode === 'opic') OpicMode.init();
+  if (mode === 'quiz')   render();
+  if (mode === 'var')    VarMode.init();
+  if (mode === 'sb')     SBMode.init();
+  if (mode === 'opic')   OpicMode.init();
+  if (mode === 'shadow') ShadowMode.init();
 }
 
 /* ============================================================
@@ -3334,14 +4306,15 @@ function openDB() {
 function closeDB() { const dp = Utils.el('db-panel-overlay'); if (dp) dp.classList.remove('open'); }
 
 function switchDBTab(tab) {
-  ['source','upload','edit'].forEach(t => {
+  ['source','goals','upload','edit'].forEach(t => {
     const btn  = Utils.el('dbtab-' + t);
     const body = Utils.el('db-body-' + t);
-    if (btn)  btn.classList.toggle('active', t===tab);
-    if (body) body.style.display = t===tab ? 'flex' : 'none';
+    if (btn)  btn.classList.toggle('active', t === tab);
+    if (body) body.style.display = t === tab ? 'flex' : 'none';
   });
-  if (tab==='edit') renderTable();
-  if (tab==='source') { renderDBSourceTab(); renderDBStats(); }
+  if (tab === 'edit')   { renderTable(); }
+  if (tab === 'source') { renderDBSourceTab(); renderDBStats(); }
+  if (tab === 'goals')  { GoalManager.renderGoalsTab(); }
 }
 
 function renderDBSourceTab() {
@@ -3448,18 +4421,23 @@ function renderTable() {
   const filtered = db.map((r,i)=>({r,i})).filter(({r}) =>
     !search || r[0].includes(search) || r[1].toLowerCase().includes(search));
   if (stat) stat.textContent = `총 ${db.length}문장 / 표시 ${filtered.length}개`;
-  listEl.innerHTML = filtered.map(({r,i}) => `
+  listEl.innerHTML = filtered.map(({r, i}) => {
+    const s  = SrsSystem.getItem(i);
+    const wb = wrongBadge(s.wrong);
+    return `
     <div style="display:flex;align-items:center;gap:8px;padding:10px 12px;background:var(--card);border:1px solid var(--border);border-radius:11px;margin-bottom:6px">
       <span style="font-size:10px;color:var(--muted);width:28px;flex-shrink:0">${i+1}</span>
       <div style="flex:1;min-width:0">
         <div style="font-size:13px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${r[0]}</div>
         <div style="font-size:12px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${r[1]}</div>
       </div>
+      ${wb}
       <div style="display:flex;gap:5px;flex-shrink:0">
         <button onclick="openEditModal(${i})" style="font-size:11px;padding:4px 9px;border-radius:7px;background:var(--adim);color:var(--accent);border:1px solid rgba(123,110,246,.3);cursor:pointer;font-family:inherit">편집</button>
         <button onclick="deleteEntry(${i})"  style="font-size:11px;padding:4px 9px;border-radius:7px;background:rgba(240,92,110,.1);color:var(--ng);border:1px solid rgba(240,92,110,.2);cursor:pointer;font-family:inherit">삭제</button>
       </div>
-    </div>`).join('');
+    </div>`;
+  }).join('');
 }
 function filterTable() { renderTable(); }
 
@@ -3529,25 +4507,37 @@ function deleteEntry(i) {
    DOMContentLoaded 이후 모든 초기화 수행
    ============================================================ */
 function run() {
-  // 1. SRS 데이터 로드
+  // 1. SRS 데이터 로드 (학습 이력 복원)
   SrsSystem.load();
-  // 2. 음성 설정 복원
+  // 2. 학습목표 로드
+  GoalManager.load();
+  // 3. 설정 로드 (한국어 보기/듣기 등)
+  loadSettings();
+  // 3. 음성 설정 복원
   selectedVoiceIdx = parseInt(localStorage.getItem('voice_idx') || '0');
   ttsRate = parseFloat(localStorage.getItem('tts_rate') || '0.9');
-  // 3. 문장 목록 빌드 + 첫 문제 렌더
+  // 4. 문장 목록 빌드 + 첫 문제 렌더
   buildViewList();
   render();
-  // 4. 알림 초기화
+  // 5. 알림 초기화
   initNotif();
-  // 5. PWA 안내 표시 (iOS Safari)
+  // 6. PWA 안내 표시 (iOS Safari)
   showPwaPrompt();
-  // 6. TTS 음성 목록 로드
+  // 7. TTS 음성 목록 로드
   initVoices();
-  // 7. 스트릭/XP 표시
+  // 8. 스트릭/XP 표시
   Progress.render();
-  // 8. 온보딩 (첫 실행 시)
-  checkOnboarding();
-  // 9. TTS 웜업 (iOS에서 첫 발화 지연 방지)
+  // 9. 시작 화면 결정
+  const hasHistory = Object.keys(JSON.parse(localStorage.getItem(SrsSystem.KEY)||'{}')).length > 0;
+  const isFirstVisit = !localStorage.getItem('onboarded_v1');
+  if (isFirstVisit) {
+    // 첫 방문 → 온보딩
+    const ob = Utils.el('ob-overlay'); if (ob) ob.classList.add('open');
+  } else if (hasHistory) {
+    // 재방문 + 학습이력 있음 → 환영 화면
+    showWelcome();
+  }
+  // 10. TTS 웜업 (iOS에서 첫 발화 지연 방지)
   setTimeout(() => {
     if (window.speechSynthesis) {
       const u = new SpeechSynthesisUtterance('');
