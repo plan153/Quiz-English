@@ -950,6 +950,277 @@ body {
    공통 애니메이션
    ============================================================ */
 @keyframes fadeIn { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
+
+/* ============================================================
+   [UI 리디자인 v2.0] 심플 퀴즈 메인 화면
+   참조: Duolingo(단일 액션 집중), ELSA(녹음 우선),
+         Babbel(명확한 진행 구조)
+   핵심: 마이크 버튼 하나만 기억하면 되는 화면
+   ============================================================ */
+
+/* 상단 바 미니멀화 */
+.top {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 16px 6px;
+  padding-top: max(env(safe-area-inset-top), 10px);
+  flex-shrink: 0;
+}
+.top-left  { display: flex; align-items: center; gap: 8px; }
+.top-right { display: flex; align-items: center; gap: 6px; }
+
+/* 스트릭/XP 칩 — 더 작게 */
+.streak-chip {
+  font-size: 12px; font-weight: 700; color: var(--gold);
+  background: rgba(245,200,66,.08);
+  border: 1px solid rgba(245,200,66,.15);
+  border-radius: 99px; padding: 4px 10px; cursor: default;
+  display: flex; align-items: center; gap: 3px;
+}
+.xp-chip {
+  font-size: 12px; font-weight: 700; color: var(--accent);
+  background: var(--adim); border: 1px solid rgba(123,110,246,.15);
+  border-radius: 99px; padding: 4px 10px; cursor: default;
+  display: flex; align-items: center; gap: 3px;
+}
+
+/* 필터/메뉴 버튼 */
+.icon-btn {
+  width: 34px; height: 34px; border-radius: 10px;
+  background: var(--card); border: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px; cursor: pointer; transition: all .2s;
+  flex-shrink: 0;
+}
+.icon-btn:active { background: var(--adim); border-color: rgba(123,110,246,.3); }
+
+/* 진행바 + 문제번호 한 줄 */
+.prog-row {
+  display: flex; align-items: center; gap: 10px;
+  padding: 0 16px 8px; flex-shrink: 0;
+}
+.prog-bar  { flex: 1; height: 5px; background: var(--border); border-radius: 99px; overflow: hidden; }
+.prog-fill { height: 5px; background: linear-gradient(90deg, var(--accent), var(--gold)); border-radius: 99px; transition: width .5s; }
+.prog-num  { font-size: 11px; font-weight: 700; color: var(--muted); flex-shrink: 0; }
+
+/* ── 새 퀴즈 메인 레이아웃 ── */
+.quiz-main {
+  flex: 1; display: flex; flex-direction: column; overflow: hidden;
+}
+
+/* 문장 영역: 스크롤 없이 꽉 채움 */
+.sentence-area {
+  flex: 1; display: flex; flex-direction: column;
+  justify-content: center; padding: 16px 20px; overflow: hidden;
+}
+
+/* 힌트 배지 — 상단 작게 */
+.hint-badge {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-size: 11px; font-weight: 600; color: var(--accent);
+  background: var(--adim); border: 1px solid rgba(123,110,246,.2);
+  border-radius: 99px; padding: 3px 10px; margin-bottom: 14px;
+  align-self: flex-start;
+}
+.hint-badge.hidden { visibility: hidden; }
+
+/* 한국어 문장 — 크고 중앙 */
+.ko-sentence {
+  font-size: 26px; font-weight: 800; line-height: 1.55;
+  color: var(--text); word-break: keep-all; margin-bottom: 12px;
+  letter-spacing: -0.3px;
+}
+
+/* TTS 버튼 — 인라인 작게 */
+.ko-tts-btn {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-size: 12px; color: var(--muted);
+  background: transparent; border: 1px solid var(--border);
+  border-radius: 99px; padding: 5px 13px;
+  cursor: pointer; font-family: inherit; transition: all .2s;
+  align-self: flex-start; margin-bottom: 20px;
+}
+.ko-tts-btn:active, .ko-tts-btn.on {
+  background: var(--adim); color: var(--accent);
+  border-color: rgba(123,110,246,.4);
+}
+
+/* 영작 결과 인라인 — 카드 없애고 텍스트만 */
+.answer-inline {
+  font-size: 18px; font-weight: 600; line-height: 1.7;
+  min-height: 28px; word-break: break-word;
+  color: var(--muted); font-style: italic;
+  transition: color .2s;
+}
+.answer-inline.has-content { color: var(--text); font-style: normal; }
+
+/* 타이핑 입력 — 심플 */
+.type-input-wrap {
+  display: none; margin-top: 10px;
+}
+.type-input-new {
+  width: 100%; height: 44px; border-radius: 12px; padding: 0 14px;
+  background: var(--card); border: 1px solid var(--border);
+  color: var(--text); font-size: 15px; font-family: inherit; outline: none;
+  transition: border-color .2s;
+}
+.type-input-new:focus { border-color: var(--accent); }
+
+/* ── 피드백 슬라이드업 ── */
+.feedback-sheet {
+  position: absolute; left: 0; right: 0; bottom: 0;
+  background: var(--card);
+  border-radius: 22px 22px 0 0;
+  border-top: 1px solid var(--border);
+  padding: 16px 18px;
+  padding-bottom: max(env(safe-area-inset-bottom), 16px);
+  transform: translateY(100%);
+  transition: transform .32s cubic-bezier(.32,1,.23,1);
+  z-index: 50; max-height: 70vh; overflow-y: auto;
+}
+.feedback-sheet.show { transform: translateY(0); }
+.feedback-sheet.ok   { border-top-color: rgba(62,201,138,.4); }
+.feedback-sheet.ng   { border-top-color: rgba(240,92,110,.4); }
+.feedback-sheet.partial { border-top-color: rgba(245,200,66,.4); }
+
+/* 피드백 헤더 */
+.fb-header {
+  display: flex; align-items: center; gap: 10px; margin-bottom: 10px;
+}
+.fb-result-icon {
+  width: 40px; height: 40px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 20px; flex-shrink: 0;
+}
+.fb-result-icon.ok      { background: rgba(62,201,138,.15); }
+.fb-result-icon.ng      { background: rgba(240,92,110,.12); }
+.fb-result-icon.partial { background: rgba(245,200,66,.1); }
+.fb-result-text { font-size: 16px; font-weight: 700; }
+.fb-result-text.ok      { color: var(--ok); }
+.fb-result-text.ng      { color: var(--ng); }
+.fb-result-text.partial { color: var(--gold); }
+
+/* 모범 답안 */
+.fb-model-ans {
+  font-size: 15px; font-weight: 600; line-height: 1.6;
+  margin-bottom: 8px; padding: 10px 12px;
+  background: rgba(255,255,255,.04); border-radius: 11px;
+}
+.fb-model-ans small {
+  display: block; font-size: 11px; color: var(--muted);
+  font-weight: 400; margin-bottom: 4px;
+}
+
+/* SRS 정보 */
+.fb-srs {
+  font-size: 11px; color: var(--muted); margin-bottom: 10px;
+}
+
+/* 이즈 버튼 */
+.ease-row-new {
+  display: flex; gap: 8px; margin-bottom: 8px;
+}
+.ease-new {
+  flex: 1; height: 42px; border-radius: 12px; font-size: 13px; font-weight: 700;
+  cursor: pointer; border: none; font-family: inherit; transition: all .2s;
+}
+.ease-new:active { transform: scale(.97); }
+.ease-easy-new { background: rgba(62,201,138,.12); color: var(--ok); border: 1px solid rgba(62,201,138,.25); }
+.ease-hard-new { background: rgba(240,92,110,.1);  color: var(--ng); border: 1px solid rgba(240,92,110,.2); }
+
+/* 다음 버튼 (피드백 내) */
+.fb-next-btn {
+  width: 100%; height: 50px; border-radius: 14px;
+  background: linear-gradient(135deg, var(--accent), #5B54D4);
+  color: #fff; font-size: 16px; font-weight: 700;
+  border: none; cursor: pointer; font-family: inherit; transition: all .2s;
+}
+.fb-next-btn:active { transform: scale(.98); }
+
+/* ── 하단 컨트롤 — 심플 3버튼 ── */
+.quiz-controls {
+  flex-shrink: 0; padding: 10px 20px 12px;
+  background: var(--bg); border-top: 1px solid rgba(255,255,255,.06);
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+}
+.ctrl-arrow {
+  width: 52px; height: 52px; border-radius: 16px;
+  background: var(--card); border: 1px solid var(--border);
+  font-size: 20px; cursor: pointer; display: flex;
+  align-items: center; justify-content: center; transition: all .2s;
+  flex-shrink: 0;
+}
+.ctrl-arrow:active { transform: scale(.93); background: var(--adim); border-color: rgba(123,110,246,.3); }
+
+/* 마이크 버튼 — 히어로 */
+.mic-hero {
+  width: 76px; height: 76px; border-radius: 50%;
+  background: linear-gradient(135deg, var(--accent) 0%, #5B54D4 100%);
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  cursor: pointer; transition: all .25s;
+  box-shadow: 0 6px 28px rgba(123,110,246,.45);
+  -webkit-tap-highlight-color: transparent; flex-shrink: 0;
+}
+.mic-hero:active    { transform: scale(.92); }
+.mic-hero.recording {
+  background: linear-gradient(135deg, var(--ng), #C0304A);
+  box-shadow: 0 6px 28px rgba(240,92,110,.5);
+  animation: mpulse 1s infinite;
+}
+
+/* 정답보기 버튼 (작게, 마이크 아래) */
+.show-ans-link {
+  text-align: center; font-size: 11px; color: var(--muted);
+  cursor: pointer; padding: 4px 0; letter-spacing: .02em;
+}
+.show-ans-link:hover { color: var(--accent); }
+
+/* 마이크 중앙 래퍼 */
+.mic-center {
+  display: flex; flex-direction: column; align-items: center; gap: 5px;
+}
+.mic-status {
+  font-size: 11px; color: var(--muted); font-weight: 600; letter-spacing: .03em;
+}
+
+/* ── 필터 드로어 (상단 ≡ 클릭 시) ── */
+.filter-drawer {
+  position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 150;
+  display: none;
+}
+.filter-drawer.open { display: flex; flex-direction: column; justify-content: flex-end; }
+.filter-backdrop {
+  position: absolute; inset: 0; background: rgba(0,0,0,.6);
+  backdrop-filter: blur(4px);
+}
+.filter-sheet {
+  position: relative; background: #14141C;
+  border-radius: 24px 24px 0 0; padding: 20px 18px;
+  padding-bottom: max(env(safe-area-inset-bottom), 20px);
+  animation: fadeIn .25s ease;
+}
+.filter-title {
+  font-size: 15px; font-weight: 700; margin-bottom: 16px;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.filter-close {
+  font-size: 18px; color: var(--muted); cursor: pointer;
+  background: none; border: none;
+}
+.filter-section { margin-bottom: 16px; }
+.filter-section-label {
+  font-size: 10px; font-weight: 700; color: var(--muted);
+  letter-spacing: .1em; text-transform: uppercase; margin-bottom: 8px;
+}
+.filter-chips { display: flex; gap: 6px; flex-wrap: wrap; }
+.filter-chip {
+  padding: 7px 16px; border-radius: 99px; font-size: 13px; font-weight: 600;
+  cursor: pointer; border: 1px solid var(--border); background: transparent;
+  color: var(--muted); font-family: inherit; transition: all .2s;
+}
+.filter-chip.on {
+  background: var(--adim); color: var(--accent);
+  border-color: rgba(123,110,246,.4);
+}
 </style>
 </head>
 <body>
@@ -958,75 +1229,60 @@ body {
   <!-- ======================================================
     상단 바: 문제번호 / 스트릭 / XP / 통계
     ====================================================== -->
+  <!-- 상단 바: 스트릭·XP (좌) + 필터·설정 (우) -->
   <div class="top">
-    <span class="qnum" id="qnum">1 / 500</span>
-    <div class="top-pills">
+    <div class="top-left">
       <span class="streak-chip" title="연속 학습일">🔥 <span id="streak-num">0</span>일</span>
       <span class="xp-chip" title="누적 XP">⚡ <span id="xp-num">0</span>XP</span>
-      <span class="pill pill-due" id="pill-due" style="display:none">복습 0</span>
-      <span class="pill pill-ok"  id="pill-ok">정답 0</span>
-      <span class="pill pill-ng"  id="pill-ng">오답 0</span>
-      <button class="voice-setting-btn" onclick="openVoicePanel()" title="음성 설정">🎙</button>
-      <button class="settings-btn" onclick="openSettings()" title="학습 설정">⚙️</button>
+    </div>
+    <div class="top-right">
+      <button class="icon-btn" onclick="openFilterDrawer()" title="레벨·탭 필터">≡</button>
+      <button class="icon-btn" onclick="openVoicePanel()" title="음성 설정">🎙</button>
+      <button class="icon-btn" onclick="openSettings()" title="학습 설정">⚙️</button>
     </div>
   </div>
 
-  <!-- 진행 바 -->
-  <div class="pbar"><div class="pfill" id="pfill" style="width:0.2%"></div></div>
+  <!-- 진행 바 + 문제 번호 한 줄 -->
+  <div class="prog-row">
+    <div class="prog-bar"><div class="prog-fill" id="pfill" style="width:0.2%"></div></div>
+    <span class="prog-num" id="qnum">1/500</span>
+  </div>
 
   <!-- ======================================================
     MODE 1: 영작 퀴즈
     ====================================================== -->
   <div class="mode-screen active" id="screen-quiz">
-    <!-- 레벨 필터 (L1=초보 / L2=초급 / L3=중하 / L4=중급) -->
-    <div class="level-bar" id="quiz-level-bar">
-      <button class="lv-btn on" onclick="setQuizLevel('all')">전체</button>
-      <button class="lv-btn" onclick="setQuizLevel('L1')">L1 초보</button>
-      <button class="lv-btn" onclick="setQuizLevel('L2')">L2 초급</button>
-      <button class="lv-btn" onclick="setQuizLevel('L3')">L3 중하</button>
-      <button class="lv-btn" onclick="setQuizLevel('L4')">L4 중급</button>
-    </div>
-    <!-- 스크롤 영역 -->
-    <div class="scroll" id="scroll">
-      <div class="htag"><span class="hdot"></span><span id="htxt">힌트</span></div>
-      <!-- 한국어 문장 카드 -->
-      <div class="kcard">
-        <div class="klabel">한국어 문장</div>
-        <div class="ktext" id="ktxt"></div>
-        <button class="spk" id="spkbtn" onclick="speakKo()">🔊 <span id="spklbl">한국어 듣기</span></button>
+  <div class="quiz-main">
+
+    <!-- 문장 영역: 한국어 문장 크게, 정답 영역 인라인 -->
+    <div class="sentence-area">
+
+      <!-- 힌트 배지 (동사 카테고리) -->
+      <div class="hint-badge" id="hint-badge">
+        <span style="width:5px;height:5px;border-radius:50%;background:var(--accent);flex-shrink:0"></span>
+        <span id="htxt"></span>
       </div>
-      <!-- 내 영작 결과 카드 -->
-      <div class="acard">
-        <div class="alabel">내 영작</div>
-        <div class="atxt ph" id="atxt">마이크 버튼을 눌러 영어로 말하세요</div>
-        <!-- 타이핑 모드: STT 미지원 환경에서 직접 입력 -->
-        <div id="type-row" style="display:none;margin-top:10px;display:none">
-          <input id="type-input" type="text" placeholder="영어로 입력 후 Enter..."
-            style="width:100%;height:40px;border-radius:10px;padding:0 12px;background:var(--bg);border:1px solid var(--border);color:var(--text);font-size:14px;font-family:inherit;outline:none"
-            onkeydown="if(event.key==='Enter'&&this.value.trim()){gradeTyped(this.value.trim());this.value=''}">
-        </div>
-        <button id="type-toggle-btn" onclick="toggleTypeMode()"
-          style="margin-top:8px;font-size:11px;color:var(--muted);background:transparent;border:1px solid var(--border);border-radius:99px;padding:3px 12px;cursor:pointer;font-family:inherit">
-          ⌨️ 타이핑으로 입력
-        </button>
+
+      <!-- 한국어 문장 (크고 선명하게) -->
+      <div class="ko-sentence" id="ktxt"></div>
+
+      <!-- 한국어 TTS -->
+      <button class="ko-tts-btn" id="spkbtn" onclick="speakKo()">
+        🔊 <span>한국어 듣기</span>
+      </button>
+
+      <!-- 내 영작 결과 (인라인, 카드 없이) -->
+      <div class="answer-inline" id="atxt">영어로 말해보세요</div>
+
+      <!-- 타이핑 모드 입력 -->
+      <div class="type-input-wrap" id="type-row">
+        <input class="type-input-new" id="type-input" type="text"
+          placeholder="영어로 입력 후 Enter..."
+          onkeydown="if(event.key==='Enter'&&this.value.trim()){gradeTyped(this.value.trim());this.value=''}">
       </div>
-      <!-- 피드백 카드 (채점 후 표시) -->
-      <div class="fb" id="fb">
-        <div class="fbh"><span style="font-size:16px" id="fbico"></span><span class="fbv" id="fbv"></span></div>
-        <div class="fbm" id="fbm"></div>
-        <div class="fbc" id="fbc"></div>
-        <div class="srs-info" id="srs-info" style="display:none"></div>
-        <!-- 쉬웠어요/어려웠어요 → SM-2 ease factor 적용 -->
-        <div class="ease-row" id="ease-row" style="display:none">
-          <button class="ease-btn ease-easy" onclick="applyEase('easy')">😊 쉬웠어요</button>
-          <button class="ease-btn ease-hard" onclick="applyEase('hard')">😓 어려웠어요</button>
-        </div>
-        <!-- AI 피드백 (오답 시 Claude API 호출) -->
-        <button class="ai-btn" id="ai-btn" style="display:none" onclick="fetchAIFeedback()">✨ <span>왜 틀렸나요?</span></button>
-        <div class="ai-result" id="ai-result"></div>
-      </div>
-      <!-- 알림 배너 -->
-      <div class="notif-banner" id="notif-banner">
+
+      <!-- 알림 배너 (접혀있다가 필요 시) -->
+      <div class="notif-banner" id="notif-banner" style="margin-top:16px">
         <b>📣 하루 3번 알림 받기</b><br>매일 랜덤 시간에 영작 퀴즈 알림을 보내드려요.
         <div class="notif-row">
           <button class="notif-btn nballow" onclick="requestNotif()">알림 허용</button>
@@ -1034,38 +1290,75 @@ body {
         </div>
       </div>
     </div>
-    <!-- 하단 컨트롤: 마이크 + 네비게이션 -->
-    <div class="bot">
-      <div class="mwrap">
-        <!-- 마이크 버튼: 탭하면 음성 인식 시작/중지 -->
-        <div class="mring" id="mring" onclick="toggleMic()">
-          <div class="minner">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
-              <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
-              <line x1="12" y1="19" x2="12" y2="23"/>
-              <line x1="8" y1="23" x2="16" y2="23"/>
-            </svg>
-          </div>
+
+    <!-- 하단 컨트롤: ← [마이크] → -->
+    <div class="quiz-controls">
+      <!-- 이전 -->
+      <button class="ctrl-arrow" onclick="go(cur-1)" aria-label="이전 문제">‹</button>
+
+      <!-- 마이크 히어로 + 정답보기 -->
+      <div class="mic-center">
+        <div class="mic-hero" id="mring" onclick="toggleMic()" role="button" aria-label="녹음">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none"
+            stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
+            <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+            <line x1="12" y1="19" x2="12" y2="23"/>
+            <line x1="8"  y1="23" x2="16" y2="23"/>
+          </svg>
         </div>
-        <span class="mlabel" id="mlabel">탭하여 녹음</span>
+        <span class="mic-status" id="mlabel">탭하여 녹음</span>
+        <span class="show-ans-link" onclick="showAns()">정답 보기</span>
+        <span class="show-ans-link" onclick="toggleTypeMode()" style="color:rgba(255,255,255,.25)">⌨️</span>
       </div>
-      <div class="nav">
-        <button class="nbtn nnav" onclick="go(cur-1)">←</button>
-        <button class="nbtn nshow" onclick="showAns()">정답 보기</button>
-        <button class="nbtn nnav" onclick="go(cur+1)">→</button>
-      </div>
-      <div class="tabs">
-        <button class="tab active" id="tab-all"   onclick="switchTab('all')">전체</button>
-        <button class="tab"        id="tab-due"   onclick="switchTab('due')">오늘 복습</button>
-        <button class="tab"        id="tab-wrong" onclick="switchTab('wrong')">틀린 것만</button>
-      </div>
-      <span class="list-toggle" onclick="openPanel()">문제 목록 보기</span>
-      <div class="bot-row2">
-        <button class="db-manage-btn" onclick="openDB()">📂 DB 관리</button>
-      </div>
+
+      <!-- 다음 -->
+      <button class="ctrl-arrow" onclick="go(cur+1)" aria-label="다음 문제">›</button>
     </div>
+
+  </div><!-- /.quiz-main -->
+
+  <!-- 피드백 슬라이드업 시트 (채점 후 올라옴) -->
+  <div class="feedback-sheet" id="fb">
+    <div class="fb-header">
+      <div class="fb-result-icon" id="fbico-wrap">
+        <span id="fbico" style="font-size:22px"></span>
+      </div>
+      <div>
+        <div class="fb-result-text" id="fbv"></div>
+        <div style="font-size:12px;color:var(--muted)" id="fbc"></div>
+      </div>
+      <!-- 시트 닫기 -->
+      <button onclick="closeFeedback()"
+        style="margin-left:auto;background:none;border:none;font-size:20px;color:var(--muted);cursor:pointer;padding:4px">✕</button>
+    </div>
+
+    <!-- 모범 답안 -->
+    <div class="fb-model-ans" id="fbm">
+      <small>모범 답안</small>
+      <span id="fb-model-text"></span>
+    </div>
+
+    <!-- SRS 정보 -->
+    <div class="fb-srs" id="srs-info" style="display:none"></div>
+
+    <!-- 이즈 버튼 -->
+    <div class="ease-row-new" id="ease-row" style="display:none">
+      <button class="ease-new ease-easy-new" onclick="applyEase('easy')">😊 쉬웠어요</button>
+      <button class="ease-new ease-hard-new" onclick="applyEase('hard')">😓 어려웠어요</button>
+    </div>
+
+    <!-- AI 피드백 -->
+    <button class="ai-btn" id="ai-btn" style="display:none;margin-bottom:8px" onclick="fetchAIFeedback()">
+      ✨ <span>왜 틀렸나요?</span>
+    </button>
+    <div class="ai-result" id="ai-result"></div>
+
+    <!-- 다음 문제 버튼 -->
+    <button class="fb-next-btn" onclick="closeFeedback();go(cur+1)">다음 문제 →</button>
   </div>
+
+</div><!-- /#screen-quiz -->
 
   <!-- ======================================================
     MODE 2: 변형 연습
@@ -1237,6 +1530,51 @@ body {
 <!-- ======================================================
   오버레이 팝업들 (z-index 높게 위에 떠있음)
   ====================================================== -->
+
+
+<!-- ======================================================
+  필터 드로어 — 레벨·탭 필터 (상단 ≡ 버튼)
+  ====================================================== -->
+<div class="filter-drawer" id="filter-drawer" onclick="if(event.target===this||event.target.classList.contains('filter-backdrop'))closeFilterDrawer()">
+  <div class="filter-backdrop"></div>
+  <div class="filter-sheet">
+    <div class="filter-title">
+      필터
+      <button class="filter-close" onclick="closeFilterDrawer()">✕</button>
+    </div>
+    <!-- 탭 필터 -->
+    <div class="filter-section">
+      <div class="filter-section-label">학습 범위</div>
+      <div class="filter-chips">
+        <button class="filter-chip on" id="ftab-all"   onclick="switchTab('all');closeFilterDrawer()">전체</button>
+        <button class="filter-chip"    id="ftab-due"   onclick="switchTab('due');closeFilterDrawer()">오늘 복습 <span id="f-due-count"></span></button>
+        <button class="filter-chip"    id="ftab-wrong" onclick="switchTab('wrong');closeFilterDrawer()">틀린 것만</button>
+      </div>
+    </div>
+    <!-- 레벨 필터 -->
+    <div class="filter-section">
+      <div class="filter-section-label">난이도</div>
+      <div class="filter-chips">
+        <button class="filter-chip on" id="flv-all" onclick="setQuizLevel('all');closeFilterDrawer()">전체</button>
+        <button class="filter-chip"    id="flv-L1"  onclick="setQuizLevel('L1');closeFilterDrawer()">L1 초보 (HAVE·GET)</button>
+        <button class="filter-chip"    id="flv-L2"  onclick="setQuizLevel('L2');closeFilterDrawer()">L2 초급 (MAKE·TAKE)</button>
+        <button class="filter-chip"    id="flv-L3"  onclick="setQuizLevel('L3');closeFilterDrawer()">L3 중하 (GO~TELL)</button>
+        <button class="filter-chip"    id="flv-L4"  onclick="setQuizLevel('L4');closeFilterDrawer()">L4 중급 (기타)</button>
+      </div>
+    </div>
+    <!-- 문제 목록 / DB 관리 -->
+    <div class="filter-section" style="display:flex;gap:8px">
+      <button onclick="openPanel();closeFilterDrawer()"
+        style="flex:1;height:42px;border-radius:12px;background:var(--adim);color:var(--accent);border:1px solid rgba(123,110,246,.3);font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">
+        문제 목록
+      </button>
+      <button onclick="openDB();closeFilterDrawer()"
+        style="flex:1;height:42px;border-radius:12px;background:var(--card);color:var(--muted);border:1px solid var(--border);font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">
+        📂 DB 관리
+      </button>
+    </div>
+  </div>
+</div>
 
 <!-- 세션 완료 팝업 (10문제 완료마다 출현) -->
 <div class="session-overlay" id="session-overlay" onclick="if(event.target===this)closeSession()">
@@ -2296,8 +2634,9 @@ const VB = {
     const v = verb.toLowerCase().replace(/s$/, '');
     if (v.endsWith('ie')) return v.slice(0, -2) + 'ying';
     if (v.endsWith('e') && !v.endsWith('ee')) return v.slice(0, -1) + 'ing';
-    if (/[bcdfghjklmnpqrstvwxz]{2}$/.test(v)) return v + 'ing'; // 이미 겹침
-    if (/[aeiou][bcdfghjklmnpqrstvwxz]$/.test(v) && v.length > 2) return v + v.slice(-1) + 'ing';
+    if (/[bcdfghjklmnpqrstvwxz]{2}$/.test(v)) return v + 'ing'; // 이미 겹침 (e.g. add→adding)
+    // 단일모음 + 자음 (CVC) 패턴만 겹침 적용 — 이중모음(eat, read 등)은 겹침 없음
+    if (/[^aeiou][aeiou][bcdfghjklmnpqrstvwxz]$/.test(v) && v.length > 2) return v + v.slice(-1) + 'ing';
     return v + 'ing';
   },
 
@@ -2835,6 +3174,7 @@ function grade(userAns) {
   const fbico = Utils.el('fbico'); if (fbico) fbico.textContent = correct ? '✦' : partial ? '◑' : '✕';
   const fbv   = Utils.el('fbv');   if (fbv)   fbv.textContent   = correct ? '정답!' : partial ? '거의 맞아요!' : '틀렸어요';
   const fbm   = Utils.el('fbm');   if (fbm)   fbm.textContent   = '모범: ' + q[1];
+  const fbmt  = Utils.el('fb-model-text'); if(fbmt) fbmt.textContent = q[1];
   const fbc   = Utils.el('fbc');   if (fbc)   fbc.textContent   = correct ? '완벽해요!' : '빨간 밑줄 = 틀린 부분 / [대괄호] = 빠진 단어';
 
   // SRS 기록
@@ -4546,6 +4886,144 @@ function run() {
   }, 500);
 }
 
+
+
+/* ============================================================
+   UI v2.0 — 새 메인 화면 관련 함수
+   ============================================================ */
+
+/* render() 오버라이드: 새 요소 ID 적용 */
+const _origRender = render;
+render = function() {
+  _origRender();
+  const db  = getActiveDB();
+  const idx = viewList[cur] ?? 0;
+  const q   = db[idx];
+  if (!q) return;
+
+  // 피드백 시트 닫기
+  closeFeedback();
+  // 힌트 배지
+  const hb = Utils.el('hint-badge');
+  if (hb) hb.style.visibility = (appSettings.showHint && q[2]) ? 'visible' : 'hidden';
+  // 한국어 카드 표시
+  const ks = Utils.el('ktxt');
+  if (ks && ks.closest) {
+    const sa = ks.closest('.sentence-area');
+    if (sa) sa.style.display = appSettings.showKo ? '' : 'none';
+  }
+  // 진행 바
+  const pf2 = Utils.el('pfill');
+  const pct2 = viewList.length > 1 ? (cur / (viewList.length - 1)) * 100 : 100;
+  if (pf2) pf2.style.width = Math.max(0.5, pct2) + '%';
+  // 번호
+  const qn2 = Utils.el('qnum');
+  if (qn2) qn2.textContent = `${cur+1}/${viewList.length}`;
+  // 복습 건수 배지
+  const dueCount = viewList.filter(i => SrsSystem.isDue(i)).length;
+  const fdc = Utils.el('f-due-count');
+  if (fdc) fdc.textContent = dueCount > 0 ? `(${dueCount})` : '';
+};
+
+/* 피드백 시트 열기/닫기 */
+function openFeedback(type) {
+  const fb = Utils.el('fb');
+  if (!fb) return;
+  fb.className = 'feedback-sheet show ' + type;
+  // fbico-wrap 색
+  const iw = Utils.el('fbico-wrap');
+  if (iw) iw.className = 'fb-result-icon ' + type;
+}
+function closeFeedback() {
+  const fb = Utils.el('fb');
+  if (fb) fb.className = 'feedback-sheet';
+}
+
+/* grade() 오버라이드: 새 피드백 시트 사용 */
+const _origGrade = grade;
+grade = function(userAns) {
+  _origGrade(userAns);
+  // 피드백 시트 열기
+  const db  = getActiveDB();
+  const idx = viewList[cur] ?? 0;
+  const q   = db[idx];
+  if (!q) return;
+  const correct = Utils.isCorrect(userAns, q[1]);
+  const partial = !correct && Utils.isPartial(userAns, q[1]);
+  const type    = correct ? 'ok' : partial ? 'partial' : 'ng';
+  // 모범 답안 업데이트
+  const fbt = Utils.el('fb-model-text');
+  if (fbt) fbt.textContent = q[1];
+  // 정답 인라인 표시 업데이트
+  const at2 = Utils.el('atxt');
+  if (at2) {
+    at2.className = 'answer-inline has-content';
+    at2.innerHTML = diffHTML(userAns, q[1]);
+  }
+  openFeedback(type);
+};
+
+/* showAns() 오버라이드: 피드백 시트 오픈 */
+const _origShowAns = showAns;
+showAns = function() {
+  _origShowAns();
+  const db  = getActiveDB();
+  const idx = viewList[cur] ?? 0;
+  const q   = db[idx];
+  if (!q) return;
+  const fbt = Utils.el('fb-model-text');
+  if (fbt) fbt.textContent = q[1];
+  const fbv2 = Utils.el('fbv');
+  if (fbv2) fbv2.textContent = '모범 답안';
+  const fbico2 = Utils.el('fbico');
+  if (fbico2) fbico2.textContent = '📖';
+  openFeedback('partial');
+};
+
+/* 필터 드로어 열기/닫기 */
+function openFilterDrawer() {
+  const fd = Utils.el('filter-drawer');
+  if (fd) fd.classList.add('open');
+  // 현재 상태 반영
+  ['all','due','wrong'].forEach(t => {
+    const el = Utils.el('ftab-' + t);
+    if (el) el.classList.toggle('on', t === curTab);
+  });
+  ['all','L1','L2','L3','L4'].forEach(lv => {
+    const el = Utils.el('flv-' + lv);
+    if (el) el.classList.toggle('on', lv === quizLevel);
+  });
+}
+function closeFilterDrawer() {
+  const fd = Utils.el('filter-drawer');
+  if (fd) fd.classList.remove('open');
+}
+
+/* switchTab 오버라이드: 필터칩 동기화 */
+const _origSwitchTab = switchTab;
+switchTab = function(tab) {
+  _origSwitchTab(tab);
+  ['all','due','wrong'].forEach(t => {
+    const el = Utils.el('ftab-' + t);
+    if (el) el.classList.toggle('on', t === tab);
+    // 기존 탭도 동기화
+    const el2 = Utils.el('tab-' + t);
+    if (el2) el2.classList.toggle('active', t === tab);
+  });
+};
+
+/* setQuizLevel 오버라이드: 필터칩 동기화 */
+const _origSetLevel = setQuizLevel;
+setQuizLevel = function(lv) {
+  _origSetLevel(lv);
+  ['all','L1','L2','L3','L4'].forEach(l => {
+    const el = Utils.el('flv-' + l);
+    if (el) el.classList.toggle('on', l === lv);
+  });
+};
+
+/* answer-inline 플레이스홀더 reset */
+const _origRenderPlain = render;
 
 /* DOM 준비 완료 후 앱 시작 */
 document.addEventListener('DOMContentLoaded', run);
