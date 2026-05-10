@@ -3476,8 +3476,16 @@ function autoSelectVoice() {
 
   // 1순위: 사용자가 앱 내에서 직접 저장한 음성
   const saved = localStorage.getItem('voice_name');
-  if (saved && voices.find(v => v.name === saved)) {
-    selectedVoiceName = saved;
+  if (saved) {
+    // __system__ 또는 실제 음성 이름
+    if (saved === '__system__' || voices.find(v => v.name === saved)) {
+      selectedVoiceName = saved;
+      return;
+    }
+  }
+  // 저장값 없으면 → 시스템 기본 모드(iOS Zoe 등 자동 사용)
+  if (!voices.length || !voices.find(v => v.default)) {
+    selectedVoiceName = '__system__';
     return;
   }
 
@@ -3513,17 +3521,25 @@ function initVoices() {
   [300, 800, 1500, 3000].forEach(ms => setTimeout(_tryLoadVoices, ms));
 }
 
-/* 영어 TTS 재생 — 이름으로 음성 조회 (인덱스 불일치 버그 제거) */
+/* 영어 TTS 재생
+   selectedVoiceName === '__system__' 이면 voice 미지정
+   → iOS가 Accessibility 설정 음성(Zoe 등)을 자동 사용 */
 function speakEn(text) {
   if (!window.speechSynthesis) return;
   speechSynthesis.cancel();
   const u = new SpeechSynthesisUtterance(text);
   u.lang = 'en-US';
   u.rate = ttsRate;
-  // 이름으로 정확히 일치하는 음성 찾기
-  const voices = getEnVoices();
-  const voice  = voices.find(v => v.name === selectedVoiceName) || voices[0];
-  if (voice) u.voice = voice;
+
+  if (selectedVoiceName !== '__system__') {
+    // 이름으로 정확히 일치하는 음성 찾기
+    const all    = window.speechSynthesis.getVoices();
+    const voice  = all.find(v => v.name === selectedVoiceName);
+    if (voice) u.voice = voice;
+    // voice 못찾으면 미지정(시스템기본) 사용
+  }
+  // selectedVoiceName === '__system__': voice 미지정 → iOS 시스템 기본(Zoe 등) 자동 사용
+
   speechSynthesis.speak(u);
 }
 
@@ -3696,6 +3712,27 @@ function renderVoiceList() {
     return a.name.localeCompare(b.name);
   });
 
+  // ── 맨 위: "시스템 기본 사용" 옵션 ──
+  // iOS에서 Zoe처럼 getVoices()에 안 잡히는 음성 사용 가능
+  const isSystemMode = (selectedVoiceName === '__system__');
+  const systemOption = `
+    <div onclick="selectVoiceByName('__system__')"
+      style="display:flex;align-items:center;gap:10px;padding:13px 14px;
+        background:${isSystemMode ? 'var(--adim)' : 'var(--card)'};
+        border:2px solid ${isSystemMode ? 'var(--accent)' : 'var(--border)'};
+        border-radius:12px;cursor:pointer;margin-bottom:10px;transition:all .2s">
+      <div style="flex:1">
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:3px">
+          <span style="font-size:14px;font-weight:700">📱 시스템 기본 음성 (권장)</span>
+          ${isSystemMode ? '<span style="color:var(--ok);font-size:16px;margin-left:auto">✓</span>' : ''}
+        </div>
+        <div style="font-size:12px;color:var(--muted);line-height:1.6">
+          iPhone 설정의 음성을 자동 사용<br>
+          <b style="color:var(--accent)">Zoe처럼 목록에 없어도 작동</b>합니다
+        </div>
+      </div>
+    </div>`;
+
   // ── 현재 선택 음성 배너 ──
   const cur = sorted.find(v => v.name === selectedVoiceName);
   const curBanner = cur ? `
@@ -3713,7 +3750,7 @@ function renderVoiceList() {
     </div>` : '';
 
   // ── 음성 목록 렌더 ──
-  vl.innerHTML = curBanner + sorted.map(v => {
+  vl.innerHTML = systemOption + curBanner + sorted.map(v => {
     const isSel  = v.name === selectedVoiceName;
     const badge  = voiceQualityBadge(v);
     // 이름에서 따옴표 이스케이프

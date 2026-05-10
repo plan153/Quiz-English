@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>음성 진단 도구</title>
+<style>
+  body { font-family: -apple-system, sans-serif; background:#0A0A12; color:#E8E6FF; padding:16px; max-width:480px; margin:0 auto; }
+  h2 { font-size:18px; margin-bottom:4px; }
+  .sub { font-size:12px; color:#6E6D85; margin-bottom:16px; }
+  button { width:100%; padding:14px; border-radius:12px; border:none; background:#7B6EF6; color:#fff; font-size:15px; font-weight:700; cursor:pointer; margin-bottom:10px; font-family:inherit; }
+  .card { background:#14141C; border:1px solid #1E1E2E; border-radius:12px; padding:12px; margin-bottom:8px; }
+  .name { font-size:14px; font-weight:600; }
+  .detail { font-size:11px; color:#6E6D85; margin-top:4px; line-height:1.7; }
+  .badge { display:inline-block; font-size:10px; font-weight:700; padding:2px 7px; border-radius:99px; margin-left:6px; }
+  .default-badge { background:rgba(62,201,138,.15); color:#3EC98A; }
+  .premium-badge { background:rgba(245,200,66,.1); color:#F5C842; }
+  .log { background:#0A0A12; border:1px solid #1E1E2E; border-radius:10px; padding:10px; font-size:11px; font-family:monospace; color:#6E6D85; white-space:pre-wrap; max-height:200px; overflow-y:auto; margin-bottom:10px; }
+  #status { font-size:13px; color:#7B6EF6; margin-bottom:10px; font-weight:600; }
+  .warn { background:rgba(245,200,66,.08); border:1px solid rgba(245,200,66,.2); border-radius:10px; padding:10px 12px; font-size:12px; color:#F5C842; line-height:1.7; margin-bottom:10px; }
+</style>
+</head>
+<body>
+<h2>🔍 iOS 음성 진단 도구</h2>
+<p class="sub">Quiz English 앱에서 Zoe가 안 보이는 원인 분석</p>
+
+<div id="status">버튼을 탭하여 시작하세요</div>
+
+<button onclick="runDiag()">📋 전체 음성 목록 불러오기</button>
+<button onclick="testSpeak()" style="background:#3EC98A">🔊 시스템 기본 음성으로 테스트 재생</button>
+<button onclick="testZoe()" style="background:#F5C842;color:#000">⭐ Zoe 직접 지정 테스트</button>
+
+<div id="warn-box"></div>
+<div id="log"></div>
+<div id="voice-list"></div>
+
+<script>
+const log = s => {
+  const el = document.getElementById('log');
+  el.textContent += s + '\n';
+  el.scrollTop = el.scrollHeight;
+};
+const status = s => document.getElementById('status').textContent = s;
+
+function runDiag() {
+  document.getElementById('log').textContent = '';
+  document.getElementById('voice-list').innerHTML = '';
+  document.getElementById('warn-box').innerHTML = '';
+  status('로딩 중...');
+
+  // iOS 워크업: 빈 utterance
+  const dummy = new SpeechSynthesisUtterance('');
+  speechSynthesis.speak(dummy);
+  speechSynthesis.cancel();
+
+  log('speechSynthesis 사용 가능: ' + !!window.speechSynthesis);
+  log('UA: ' + navigator.userAgent.slice(0,80));
+
+  const tryLoad = (attempt) => {
+    const all = speechSynthesis.getVoices();
+    log(`[시도 ${attempt}] getVoices() 반환 수: ${all.length}`);
+    if (all.length > 0 || attempt >= 8) {
+      renderResults(all);
+    } else {
+      setTimeout(() => tryLoad(attempt + 1), 500);
+    }
+  };
+
+  speechSynthesis.onvoiceschanged = () => {
+    log('onvoiceschanged 이벤트 발생!');
+    tryLoad(99);
+  };
+  tryLoad(1);
+}
+
+function renderResults(all) {
+  const el = document.getElementById('voice-list');
+  const warnEl = document.getElementById('warn-box');
+
+  if (!all.length) {
+    status('❌ 음성 없음 — iOS 제약으로 Web Speech API 접근 불가');
+    warnEl.innerHTML = '<div class="warn">⚠️ iOS Safari는 Web Speech API 음성 목록을 반환하지 않는 경우가 있습니다.<br>앱이 아닌 Safari에서 열었는지 확인하세요.</div>';
+    return;
+  }
+
+  const en = all.filter(v => /en/i.test(v.lang));
+  const hasZoe = all.some(v => /zoe/i.test(v.name));
+  const hasDefault = all.some(v => v.default);
+
+  status(`✅ 전체 ${all.length}개 음성 로드됨 (영어: ${en.length}개)`);
+  log(`Zoe 포함: ${hasZoe}`);
+  log(`default 음성 있음: ${hasDefault}`);
+  log('기기 기본(default): ' + (all.find(v=>v.default)?.name || '없음'));
+
+  if (!hasZoe) {
+    warnEl.innerHTML = `<div class="warn">
+      ⚠️ <b>Zoe가 getVoices()에 없습니다</b><br>
+      iOS Safari는 Accessibility 설정의 프리미엄 음성을 Web API로 노출하지 않을 수 있습니다.<br>
+      대신 <b>기기 기본 음성</b>(default:true)이 Zoe를 사용할 가능성이 있습니다.
+    </div>`;
+  }
+
+  el.innerHTML = '<div style="font-size:12px;color:#6E6D85;margin-bottom:8px">── 전체 음성 목록 ──</div>' +
+    all.map(v => `
+      <div class="card">
+        <div class="name">
+          ${v.name}
+          ${v.default ? '<span class="badge default-badge">📱 기기 기본</span>' : ''}
+          ${/Enhanced|Premium|Zoe|Ava|Nora/i.test(v.name) ? '<span class="badge premium-badge">⭐ 프리미엄</span>' : ''}
+        </div>
+        <div class="detail">
+          lang: ${v.lang} | local: ${v.localService} | default: ${v.default}<br>
+          URI: ${v.voiceURI || '없음'}
+        </div>
+      </div>`).join('');
+}
+
+function testSpeak() {
+  const u = new SpeechSynthesisUtterance('Hello! This is a test using the system default voice.');
+  u.lang = 'en-US';
+  // voice 지정 안 함 → 시스템 기본(Zoe일 수 있음) 사용
+  speechSynthesis.cancel();
+  speechSynthesis.speak(u);
+  status('🔊 시스템 기본 음성으로 재생 중 (voice 미지정)');
+  log('voice 미지정 → 시스템 기본 사용');
+}
+
+function testZoe() {
+  const all = speechSynthesis.getVoices();
+  const zoe = all.find(v => /zoe/i.test(v.name));
+  const def = all.find(v => v.default);
+  const target = zoe || def;
+
+  const u = new SpeechSynthesisUtterance('Hello! Testing Zoe voice directly.');
+  u.lang = 'en-US';
+  if (target) { u.voice = target; status(`🎯 직접 지정: ${target.name}`); }
+  else { status('⚠️ Zoe/default 없음 → 미지정으로 재생'); }
+  speechSynthesis.cancel();
+  speechSynthesis.speak(u);
+  log(`재생: ${target?.name || '미지정(시스템기본)'}`);
+}
+</script>
+</body>
+</html>
