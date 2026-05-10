@@ -722,6 +722,14 @@ body {
 .voice-item.selected { border-color: var(--accent); background: var(--adim); }
 .vi-name { font-size: 13px; font-weight: 600; }
 .vi-lang { font-size: 11px; color: var(--muted); margin-top: 2px; }
+/* 음성 품질 뱃지 */
+.voice-badge {
+  font-size: 10px; font-weight: 700; padding: 2px 7px;
+  border-radius: 99px; flex-shrink: 0;
+}
+.vb-sys     { background: rgba(62,201,138,.12); color: var(--ok); }
+.vb-premium { background: rgba(245,200,66,.1);  color: var(--gold); }
+.vb-online  { background: var(--adim);           color: var(--accent); }
 /* 속도 슬라이더 */
 .rate-row { display: flex; align-items: center; gap: 10px; padding: 10px 0; }
 .rate-label { font-size: 12px; color: var(--muted); flex-shrink: 0; }
@@ -1746,6 +1754,10 @@ body {
 <div class="voice-panel" id="voice-panel">
   <div class="voice-panel-inner">
     <div class="voice-panel-title">🎙 음성 설정</div>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:10px;line-height:1.6;background:var(--adim);border-radius:10px;padding:9px 12px">
+      📱 <b style="color:var(--accent)">기기 기본</b>은 iPhone 설정에서 선택한 음성 (Zoe 등)<br>
+      앱을 열면 자동으로 감지됩니다.
+    </div>
     <div class="rate-row">
       <span class="rate-label">속도</span>
       <input class="rate-slider" type="range" min="0.5" max="1.5" step="0.1"
@@ -3380,24 +3392,116 @@ function importBackup(file) {
    iOS Safari는 연속 인식 미지원 → 한 번 발화 후 자동 제출
    ============================================================ */
 let speechVoices    = [];  // 사용 가능한 TTS 음성 목록
-let selectedVoiceIdx = 0; // 선택된 음성 인덱스
-let ttsRate          = 0.9; // TTS 재생 속도 (0.5~1.5)
+/* ============================================================
+   음성 시스템 — 완전 재작성 (v2)
+
+   핵심 변경사항:
+   1. 인덱스(숫자) 대신 음성 이름(문자열)으로 저장 → 배열 순서 불일치 버그 제거
+   2. voice.default === true → iOS 설정에서 사용자가 선택한 음성 자동 감지
+   3. 전체 영어 음성 표시 (프리미엄/기기기본/오프라인 여부 뱃지 포함)
+   4. 자동 선택 우선순위: 저장값 → 기기기본 → 프리미엄 → en-US → 첫번째
+   ============================================================ */
+
+/* 선택된 음성 이름 (인덱스 대신 이름으로 관리) */
+let selectedVoiceName = localStorage.getItem('voice_name') || '';
+let selectedVoiceIdx  = 0; // 하위호환용 (사용 최소화)
+let ttsRate = 0.9;
+
+/* 전체 영어 음성 목록 반환 (품질 기준 정렬) */
+function getEnVoices() {
+  const voices = speechVoices.filter(v => /en/i.test(v.lang));
+  return voices.sort((a, b) => {
+    // 1순위: 기기 기본 음성 (iOS 설정에서 선택한 음성)
+    if (a.default && !b.default) return -1;
+    if (!a.default && b.default) return  1;
+    // 2순위: 프리미엄/향상 음성
+    const aP = isPremiumVoice(a), bP = isPremiumVoice(b);
+    if (aP && !bP) return -1;
+    if (!aP && bP) return  1;
+    // 3순위: en-US 우선
+    const aUS = /en[-_]US/i.test(a.lang), bUS = /en[-_]US/i.test(b.lang);
+    if (aUS && !bUS) return -1;
+    if (!aUS && bUS) return  1;
+    // 4순위: 이름순
+    return a.name.localeCompare(b.name);
+  });
+}
+
+/* 프리미엄/향상 음성 판별 */
+function isPremiumVoice(v) {
+  return v.name.includes('Enhanced') ||
+         v.name.includes('Premium')  ||
+         /Zoe|Nora|Shelley|Aaron|Nathan|Evan|Ava|Rishi|Tessa|Oliver|Moira/.test(v.name);
+}
+
+/* 품질 뱃지 HTML */
+function voiceQualityBadge(v) {
+  if (v.default)           return '<span class="voice-badge vb-sys">📱 기기 기본</span>';
+  if (isPremiumVoice(v))   return '<span class="voice-badge vb-premium">⭐ 프리미엄</span>';
+  if (!v.localService)     return '<span class="voice-badge vb-online">☁️ 온라인</span>';
+  return '';
+}
+
+/* 최적 음성 자동 선택 */
+function autoSelectVoice() {
+  const voices = getEnVoices();
+  if (!voices.length) return;
+
+  // 1순위: 사용자가 앱 내에서 직접 저장한 음성
+  const saved = localStorage.getItem('voice_name');
+  if (saved && voices.find(v => v.name === saved)) {
+    selectedVoiceName = saved;
+    return;
+  }
+
+  // 2순위: iOS 기기에서 설정한 기본 음성 (Zoe, Ava 등)
+  const systemDefault = voices.find(v => v.default);
+  if (systemDefault) {
+    selectedVoiceName = systemDefault.name;
+    console.log(`[TTS] 기기 기본 음성 감지: ${systemDefault.name}`);
+    return;
+  }
+
+  // 3순위: 프리미엄/향상 음성
+  const premium = voices.find(v => isPremiumVoice(v));
+  if (premium) {
+    selectedVoiceName = premium.name;
+    return;
+  }
+
+  // 4순위: en-US 첫 번째
+  const usVoice = voices.find(v => /en[-_]US/i.test(v.lang));
+  selectedVoiceName = (usVoice || voices[0]).name;
+}
 
 /* TTS 음성 목록 로드 */
 function initVoices() {
-  const load = () => { speechVoices = window.speechSynthesis.getVoices(); renderVoiceList(); };
-  if (window.speechSynthesis) { speechSynthesis.onvoiceschanged = load; load(); }
+  const load = () => {
+    speechVoices = window.speechSynthesis.getVoices();
+    if (!speechVoices.length) return; // iOS에서 비동기로 늦게 로드됨
+    autoSelectVoice();   // 최적 음성 자동 선택
+    renderVoiceList();   // 패널 UI 갱신
+  };
+  if (window.speechSynthesis) {
+    speechSynthesis.onvoiceschanged = load;
+    load();
+    // iOS Safari: 약간 딜레이 후 재시도
+    setTimeout(load, 500);
+    setTimeout(load, 1500);
+  }
 }
 
-/* 영어 TTS 재생 */
+/* 영어 TTS 재생 — 이름으로 음성 조회 (인덱스 불일치 버그 제거) */
 function speakEn(text) {
   if (!window.speechSynthesis) return;
   speechSynthesis.cancel();
   const u = new SpeechSynthesisUtterance(text);
-  u.lang = 'en-US'; u.rate = ttsRate;
-  const enVoices = speechVoices.filter(v => /en/i.test(v.lang));
-  if (enVoices[selectedVoiceIdx]) u.voice = enVoices[selectedVoiceIdx];
-  else if (enVoices[0]) u.voice = enVoices[0];
+  u.lang = 'en-US';
+  u.rate = ttsRate;
+  // 이름으로 정확히 일치하는 음성 찾기
+  const voices = getEnVoices();
+  const voice  = voices.find(v => v.name === selectedVoiceName) || voices[0];
+  if (voice) u.voice = voice;
   speechSynthesis.speak(u);
 }
 
@@ -3431,7 +3535,7 @@ function startRec() {
     const mr = Utils.el('mring'); if (mr) mr.classList.add('rec');
     const ml = Utils.el('mlabel'); if (ml) ml.textContent = '녹음 중...';
     const at = Utils.el('atxt');
-    if (at) { at.className = 'atxt'; at.innerHTML = '<span class="interim">듣고 있어요...</span>'; }
+    if (at) { at.className = 'answer-inline has-content'; at.innerHTML = '<span class="interim">듣고 있어요...</span>'; }
   };
 
   recObj.onresult = e => {
@@ -3443,7 +3547,7 @@ function startRec() {
     finalTxt = final;
     const at = Utils.el('atxt');
     if (at) {
-      at.className = 'atxt';
+      at.className = 'answer-inline has-content';
       at.innerHTML = final
         ? `<span class="diff-ok">${final}</span><span class="interim"> ${interim}</span>`
         : `<span class="interim">${interim}</span>`;
@@ -3464,7 +3568,7 @@ function startRec() {
     const ml = Utils.el('mlabel'); if (ml) ml.textContent = '탭하여 녹음';
     if (e.error !== 'no-speech' && e.error !== 'aborted') {
       const at = Utils.el('atxt');
-      if (at) { at.className = 'atxt ph'; at.textContent = `오류: ${e.error}. 마이크 권한을 확인하세요.`; }
+      if (at) { at.className = 'answer-inline'; at.textContent = `오류: ${e.error}. 마이크 권한을 확인하세요.`; }
     }
   };
 
@@ -3480,42 +3584,82 @@ function stopRec() {
 }
 
 /* ============================================================
-   음성 설정 패널
+   음성 설정 패널 — 전체 음성 표시 + 품질 뱃지
    ============================================================ */
-function openVoicePanel()  { renderVoiceList(); const vp = Utils.el('voice-panel'); if (vp) vp.classList.add('open'); }
-function closeVoicePanel() { const vp = Utils.el('voice-panel'); if (vp) vp.classList.remove('open'); }
+function openVoicePanel()  {
+  renderVoiceList();
+  const vp = Utils.el('voice-panel');
+  if (vp) vp.classList.add('open');
+}
+function closeVoicePanel() {
+  const vp = Utils.el('voice-panel');
+  if (vp) vp.classList.remove('open');
+}
 
 function renderVoiceList() {
   const vl = Utils.el('voice-list'); if (!vl) return;
-  const enVoices = speechVoices.filter(v => /en/i.test(v.lang));
-  // 추천 음성 목록 (자연스러운 영어 발음 우선)
-  const RECOMMENDED = ['Ava','Evan','Samantha','Karen','Daniel','Arthur','Moira','Victoria'];
-  const sorted = [...enVoices].sort((a,b) => {
-    const ai = RECOMMENDED.findIndex(n => a.name.includes(n));
-    const bi = RECOMMENDED.findIndex(n => b.name.includes(n));
-    if (ai>=0 && bi<0) return -1;
-    if (ai<0 && bi>=0) return 1;
-    return ai - bi;
-  });
-  vl.innerHTML = sorted.map((v, i) => `
-    <div class="voice-item ${i===selectedVoiceIdx?'selected':''}" onclick="selectVoice(${i})">
-      <div class="vi-name">${v.name}</div>
-      <div class="vi-lang">${v.lang}</div>
-    </div>`).join('');
+  const voices = getEnVoices();
+
+  if (!voices.length) {
+    vl.innerHTML = '<div style="font-size:13px;color:var(--muted);padding:16px;text-align:center">음성 로딩 중...</div>';
+    return;
+  }
+
+  // 현재 선택된 음성 표시 (상단 고정)
+  const currentVoice = voices.find(v => v.name === selectedVoiceName);
+  const currentBanner = currentVoice ? `
+    <div style="background:rgba(62,201,138,.08);border:1px solid rgba(62,201,138,.2);
+      border-radius:12px;padding:10px 13px;margin-bottom:10px">
+      <div style="font-size:10px;font-weight:700;color:var(--ok);letter-spacing:.08em;
+        text-transform:uppercase;margin-bottom:4px">현재 사용 중</div>
+      <div style="font-size:14px;font-weight:700">${currentVoice.name}</div>
+      <div style="font-size:11px;color:var(--muted);margin-top:2px">${currentVoice.lang}
+        ${currentVoice.default ? ' · 📱 기기 기본' : ''}
+        ${isPremiumVoice(currentVoice) ? ' · ⭐ 프리미엄' : ''}
+      </div>
+    </div>` : '';
+
+  vl.innerHTML = currentBanner + voices.map(v => {
+    const isSelected = v.name === selectedVoiceName;
+    const badge      = voiceQualityBadge(v);
+    const offline    = v.localService ? '오프라인 가능' : '온라인 필요';
+    return `
+    <div class="voice-item ${isSelected ? 'selected' : ''}"
+      onclick="selectVoiceByName('${v.name.replace(/'/g, "\\'")}')">
+      <div style="display:flex;align-items:center;gap:6px;margin-bottom:3px">
+        <div class="vi-name">${v.name}</div>
+        ${badge}
+        ${isSelected ? '<span style="font-size:12px;color:var(--ok);margin-left:auto">✓</span>' : ''}
+      </div>
+      <div class="vi-lang">${v.lang} · ${offline}</div>
+    </div>`;
+  }).join('');
+
   // 속도 슬라이더 동기화
   const rs = Utils.el('rate-slider'); if (rs) rs.value = ttsRate;
   const rv = Utils.el('rate-val');    if (rv) rv.textContent = ttsRate;
 }
 
-function selectVoice(i) {
-  selectedVoiceIdx = i; renderVoiceList();
+/* 음성 선택 (이름 기반) */
+function selectVoiceByName(name) {
+  selectedVoiceName = name;
+  renderVoiceList();
+  // 테스트 재생
   const db = getActiveDB();
-  speakEn(db[viewList[cur] ?? 0]?.[1] || 'Hello, this is a test.');
+  speakEn(db[viewList[cur] ?? 0]?.[1] || 'This is a test. Hello!');
 }
 
+/* 하위호환: 인덱스 기반 selectVoice 유지 */
+function selectVoice(i) {
+  const voices = getEnVoices();
+  if (voices[i]) selectVoiceByName(voices[i].name);
+}
+
+/* 음성 설정 저장 */
 function saveVoice() {
-  localStorage.setItem('voice_idx', selectedVoiceIdx);
-  localStorage.setItem('tts_rate', ttsRate);
+  localStorage.setItem('voice_name', selectedVoiceName);  // 이름으로 저장
+  localStorage.setItem('voice_idx',  '0');                // 하위호환
+  localStorage.setItem('tts_rate',   ttsRate);
   closeVoicePanel();
 }
 
@@ -3806,9 +3950,10 @@ const ShadowMode = {
     this.startWaveAnim('var(--accent)');
     const u = new SpeechSynthesisUtterance(q[1]);
     u.lang  = 'en-US'; u.rate = this.rate;
-    const enVoices = speechVoices.filter(v => /en/i.test(v.lang));
-    if (enVoices[selectedVoiceIdx]) u.voice = enVoices[selectedVoiceIdx];
-    else if (enVoices[0])           u.voice = enVoices[0];
+    // 이름 기반 음성 선택 (인덱스 불일치 버그 제거)
+    const enVoices = getEnVoices();
+    const voice    = enVoices.find(v => v.name === selectedVoiceName) || enVoices[0];
+    if (voice) u.voice = voice;
     u.onend = () => { this.setWaveLabel('녹음 버튼을 눌러 따라 말하세요'); this.stopWaveAnim(); };
     speechSynthesis.cancel();
     speechSynthesis.speak(u);
@@ -4853,8 +4998,8 @@ function run() {
   GoalManager.load();
   // 3. 설정 로드 (한국어 보기/듣기 등)
   loadSettings();
-  // 3. 음성 설정 복원
-  selectedVoiceIdx = parseInt(localStorage.getItem('voice_idx') || '0');
+  // 3. 음성 설정 복원 (voice_name 우선, 없으면 기기 자동 감지)
+  selectedVoiceName = localStorage.getItem('voice_name') || '';
   ttsRate = parseFloat(localStorage.getItem('tts_rate') || '0.9');
   // 4. 문장 목록 빌드 + 첫 문제 렌더
   buildViewList();
