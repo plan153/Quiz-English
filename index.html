@@ -730,6 +730,34 @@ body {
 .vb-sys     { background: rgba(62,201,138,.12); color: var(--ok); }
 .vb-premium { background: rgba(245,200,66,.1);  color: var(--gold); }
 .vb-online  { background: var(--adim);           color: var(--accent); }
+
+/* ── OpenAI TTS 설정 UI ── */
+.openai-section {
+  background: rgba(16,163,127,.08);
+  border: 1px solid rgba(16,163,127,.25);
+  border-radius: 14px; padding: 13px 14px; margin-bottom: 10px;
+}
+.openai-title { font-size: 13px; font-weight: 700; color: #10A37F; margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
+.openai-key-row { display: flex; gap: 6px; margin-bottom: 8px; }
+.openai-key-input {
+  flex: 1; height: 40px; border-radius: 10px; padding: 0 12px;
+  background: var(--bg); border: 1px solid var(--border);
+  color: var(--text); font-size: 12px; font-family: monospace; outline: none;
+}
+.openai-key-input:focus { border-color: #10A37F; }
+.openai-save-btn {
+  height: 40px; padding: 0 14px; border-radius: 10px;
+  background: #10A37F; color: #fff; border: none;
+  font-size: 13px; font-weight: 700; cursor: pointer; font-family: inherit;
+}
+.openai-voice-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; margin-bottom: 8px; }
+.openai-voice-btn {
+  padding: 8px 4px; border-radius: 10px; font-size: 12px; font-weight: 600;
+  cursor: pointer; border: 1px solid var(--border); background: var(--card);
+  color: var(--muted); font-family: inherit; text-align: center; transition: all .2s;
+}
+.openai-voice-btn.on { background: rgba(16,163,127,.12); color: #10A37F; border-color: rgba(16,163,127,.35); }
+.openai-status { font-size: 11px; color: var(--muted); margin-top: 6px; line-height: 1.6; }
 /* 속도 슬라이더 */
 .rate-row { display: flex; align-items: center; gap: 10px; padding: 10px 0; }
 .rate-label { font-size: 12px; color: var(--muted); flex-shrink: 0; }
@@ -1753,49 +1781,79 @@ body {
 <!-- 음성 설정 패널 -->
 <div class="voice-panel" id="voice-panel">
   <div class="voice-panel-inner">
-    <!-- 헤더: 제목 + 새로고침 + 닫기 -->
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
-      <div class="voice-panel-title" style="margin-bottom:0">🎙 음성 설정</div>
-      <div style="display:flex;gap:6px">
-        <button onclick="forceReloadVoices()"
-          style="font-size:12px;padding:5px 12px;border-radius:8px;background:var(--adim);
-          color:var(--accent);border:1px solid rgba(123,110,246,.3);cursor:pointer;font-family:inherit;font-weight:600">
-          🔄 새로고침
-        </button>
-        <button onclick="closeVoicePanel()"
-          style="width:32px;height:32px;border-radius:8px;background:var(--card);
-          border:1px solid var(--border);font-size:16px;cursor:pointer;color:var(--muted)">✕</button>
+
+    <!-- 헤더 -->
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+      <div style="font-size:16px;font-weight:700">🎙 음성 설정</div>
+      <button onclick="closeVoicePanel()"
+        style="width:32px;height:32px;border-radius:8px;background:var(--card);
+        border:1px solid var(--border);font-size:16px;cursor:pointer;color:var(--muted)">✕</button>
+    </div>
+
+    <!-- ① iPhone Zoe 사용법 안내 박스 -->
+    <div style="background:rgba(123,110,246,.08);border:1px solid rgba(123,110,246,.25);
+      border-radius:14px;padding:13px 14px;margin-bottom:12px">
+      <div style="font-size:12px;font-weight:700;color:var(--accent);margin-bottom:7px">
+        📱 아이폰에서 Zoe 사용하는 방법
+      </div>
+      <div style="font-size:12px;color:var(--muted);line-height:1.9">
+        Zoe는 iOS 정책상 목록에 표시되지 않습니다.<br>
+        <b style="color:var(--text)">① iPhone 설정 → 손쉬운 사용<br>
+        &nbsp;&nbsp;&nbsp;→ 말하기 → 음성 → English → Zoe ✓</b><br>
+        <b style="color:var(--text)">② 아래 "시스템 기본 음성" 선택 후 저장</b>
       </div>
     </div>
-
-    <!-- 안내 배너 -->
-    <div style="font-size:12px;color:var(--muted);margin-bottom:10px;line-height:1.7;
-      background:var(--adim);border-radius:10px;padding:9px 12px">
-      📱 <b style="color:var(--accent)">기기 기본</b> = iPhone 설정 → 손쉬운 사용 → 말하기 → 음성에서 선택한 음성<br>
-      목록이 비어있으면 <b>🔄 새로고침</b>을 탭하세요.
+    <div id="sys-voice-btn" onclick="selectVoiceByName('__system__')"
+      style="display:flex;align-items:center;gap:12px;padding:14px 16px;
+        border-radius:14px;cursor:pointer;transition:all .2s;margin-bottom:8px;
+        background:var(--card);border:2px solid var(--border)">
+      <div style="font-size:28px">📱</div>
+      <div style="flex:1">
+        <div style="font-size:14px;font-weight:700;margin-bottom:3px">
+          시스템 기본 음성
+          <span style="font-size:10px;background:rgba(62,201,138,.15);color:var(--ok);
+            padding:2px 7px;border-radius:99px;margin-left:6px;font-weight:700">권장</span>
+        </div>
+        <div style="font-size:12px;color:var(--muted);line-height:1.5">
+          iPhone 설정에서 선택한 Zoe 등 사용<br>목록에 없는 프리미엄 음성도 재생 가능
+        </div>
+      </div>
+      <div id="sys-check" style="font-size:22px;color:var(--ok);display:none">✓</div>
     </div>
 
-    <!-- 음성 수 + 현재 선택 표시 -->
-    <div id="voice-status" style="font-size:11px;color:var(--muted);margin-bottom:8px;
-      display:flex;align-items:center;gap:6px">
-      <span id="voice-count-label">로딩 중...</span>
+    <!-- 구분선 -->
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+      <div style="flex:1;height:1px;background:var(--border)"></div>
+      <div style="font-size:11px;color:var(--muted);font-weight:600">또는 직접 선택</div>
+      <div style="flex:1;height:1px;background:var(--border)"></div>
     </div>
 
-    <!-- 속도 슬라이더 -->
+    <!-- ③ 새로고침 버튼 -->
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+      <div id="voice-count-label" style="font-size:11px;color:var(--muted)">로딩 중...</div>
+      <button onclick="forceReloadVoices()"
+        style="font-size:12px;padding:5px 12px;border-radius:8px;background:var(--adim);
+        color:var(--accent);border:1px solid rgba(123,110,246,.3);cursor:pointer;font-family:inherit;font-weight:600">
+        🔄 새로고침
+      </button>
+    </div>
+
+    <!-- ④ 속도 슬라이더 -->
     <div class="rate-row" style="margin-bottom:10px">
-      <span class="rate-label">속도</span>
+      <span class="rate-label">재생 속도</span>
       <input class="rate-slider" type="range" min="0.5" max="1.5" step="0.1"
         oninput="ttsRate=parseFloat(this.value);document.getElementById('rate-val').textContent=this.value+'x'"
         id="rate-slider" value="0.9">
       <span class="rate-val" id="rate-val">0.9x</span>
     </div>
 
-    <!-- 음성 목록 -->
+    <!-- ⑤ 음성 목록 -->
     <div class="voice-list" id="voice-list"></div>
 
+    <!-- 저장 버튼 -->
     <button class="voice-save-btn" onclick="saveVoice()">✓ 저장</button>
   </div>
-</div>
+</div></div>
 
 <!-- PWA 설치 안내 (iOS Safari에서만 표시) -->
 <div class="pwa-overlay" id="pwa-overlay" style="display:none">
@@ -2637,8 +2695,7 @@ const Utils = {
    ============================================================ */
 const VB = {
 
-  /* 불규칙 동사 과거형 사전
-     key: 현재형, value: 과거형 */
+  /* 불규칙 동사 과거형 사전 */
   PAST_IRR: {
     go:'went',goes:'went',come:'came',comes:'came',have:'had',has:'had',
     get:'got',gets:'got',make:'made',makes:'made',take:'took',takes:'took',
@@ -2656,225 +2713,370 @@ const VB = {
     mean:'meant',means:'meant',speak:'spoke',speaks:'spoke',teach:'taught',teaches:'taught',
     choose:'chose',chooses:'chose',wake:'woke',wakes:'woke',fall:'fell',falls:'fell',
     understand:'understood',hit:'hit',let:'let',put:'put',cut:'cut',set:'set',
+    begin:'began',begins:'began',drink:'drank',drinks:'drank',sing:'sang',sings:'sang',
+    swim:'swam',swims:'swam',draw:'drew',draws:'drew',fly:'flew',flies:'flew',
+    throw:'threw',throws:'threw',catch:'caught',catches:'caught',fight:'fought',
+    forget:'forgot',forgets:'forgot',forgive:'forgave',forgives:'forgave',
   },
 
-  /* 동사 원형 → 과거형 변환 */
+  /* 불규칙 동사 역방향: 과거형→원형 */
+  PAST_TO_BASE: {},
+
+  /* 초기화: 역방향 사전 구성 */
+  _init() {
+    Object.entries(this.PAST_IRR).forEach(([base, past]) => {
+      if (!this.PAST_TO_BASE[past]) this.PAST_TO_BASE[past] = base.replace(/s$/, '');
+    });
+    return this;
+  },
+
+  /* 동사 원형 → 과거형 */
   toPast(verb) {
     const v = verb.toLowerCase();
-    if (VB.PAST_IRR[v]) return VB.PAST_IRR[v];
+    if (this.PAST_IRR[v]) return this.PAST_IRR[v];
     if (v.endsWith('e')) return v + 'd';
-    if (/[^aeiou]y$/.test(v)) return v.slice(0, -1) + 'ied';
+    if (/[^aeiou]y$/.test(v)) return v.slice(0,-1)+'ied';
+    if (/[^aeiou][aeiou][bcdfghjklmnpqrstvwxz]$/.test(v) && v.length>2) return v+v.slice(-1)+'ed';
     return v + 'ed';
   },
 
-  /* 동사 원형 → 진행형(-ing) 변환
-     예: run→running, make→making, lie→lying */
+  /* 과거형 → 원형 */
+  toBase(pastVerb) {
+    const v = pastVerb.toLowerCase();
+    if (this.PAST_TO_BASE[v]) return this.PAST_TO_BASE[v];
+    const found = Object.entries(this.PAST_IRR).find(([,p]) => p === v);
+    if (found) return found[0].replace(/s$/,'');
+    if (v.endsWith('ied')) return v.slice(0,-3)+'y';
+    if (v.endsWith('ed'))  return v.replace(/([bcdfghjklmnpqrstvwxz])\1ed$/,'$1').replace(/ed$/,'');
+    return v;
+  },
+
+  /* 동사 원형 → 진행형 */
   toIng(verb) {
-    const v = verb.toLowerCase().replace(/s$/, '');
-    if (v.endsWith('ie')) return v.slice(0, -2) + 'ying';
-    if (v.endsWith('e') && !v.endsWith('ee')) return v.slice(0, -1) + 'ing';
-    if (/[bcdfghjklmnpqrstvwxz]{2}$/.test(v)) return v + 'ing'; // 이미 겹침 (e.g. add→adding)
-    // 단일모음 + 자음 (CVC) 패턴만 겹침 적용 — 이중모음(eat, read 등)은 겹침 없음
-    if (/[^aeiou][aeiou][bcdfghjklmnpqrstvwxz]$/.test(v) && v.length > 2) return v + v.slice(-1) + 'ing';
-    return v + 'ing';
+    const v = verb.toLowerCase().replace(/s$/,'');
+    if (v.endsWith('ie')) return v.slice(0,-2)+'ying';
+    if (v.endsWith('e') && !v.endsWith('ee')) return v.slice(0,-1)+'ing';
+    if (/[bcdfghjklmnpqrstvwxz]{2}$/.test(v)) return v+'ing';
+    if (/[^aeiou][aeiou][bcdfghjklmnpqrstvwxz]$/.test(v) && v.length>2) return v+v.slice(-1)+'ing';
+    return v+'ing';
   },
 
-  /* 동사 원형 → 3인칭 단수 현재형 변환
-     예: go→goes, try→tries, watch→watches */
+  /* 동사 원형 → 3인칭 단수 */
   to3rd(verb) {
-    const v = verb.toLowerCase();
-    if (['go','do'].includes(v)) return v + 'es';
-    if (/[^aeiou]y$/.test(v)) return v.slice(0, -1) + 'ies';
-    if (/(s|sh|ch|x|z)$/.test(v)) return v + 'es';
-    return v + 's';
+    const v = verb.toLowerCase().replace(/s$/,''); // 이미 s 붙은 경우 제거
+    if (v === 'have') return 'has';                // 불규칙: have→has
+    if (['go','do'].includes(v)) return v+'es';
+    if (/[^aeiou]y$/.test(v)) return v.slice(0,-1)+'ies';
+    if (/(s|sh|ch|x|z)$/.test(v)) return v+'es';
+    return v+'s';
   },
 
-  /* 문장에서 주동사(main verb) 추출
-     정규표현식으로 알려진 동사 목록과 매칭 */
+  /* 동사가 과거형인지 판별 */
+  isPastTense(verb) {
+    const v = verb.toLowerCase();
+    if (v in this.PAST_TO_BASE) return true;
+    if (Object.values(this.PAST_IRR).includes(v)) return true;
+    if (v.endsWith('ed')) return true;
+    return false;
+  },
+
+  /* 주동사 추출 */
   extractVerb(sentence) {
-    const VERBS = /\b(have|has|get|gets|make|makes|take|takes|do|does|go|goes|come|comes|give|gives|eat|eats|run|runs|work|works|like|likes|love|loves|hate|hates|need|needs|want|wants|use|uses|find|finds|keep|keeps|bring|brings|buy|buys|sell|sells|help|helps|start|starts|stop|stops|finish|finishes|open|opens|close|closes|send|sends|call|calls|meet|meets|visit|visits|check|checks|walk|walks|talk|talks|tell|tells|ask|asks|show|shows|pay|pays|spend|spends|save|saves|teach|teaches|learn|learns|choose|chooses|decide|decides|plan|plans|try|tries|move|moves|stay|stays|sleep|sleeps|wake|wakes|cook|cooks|clean|cleans|hold|holds|wear|wears|carry|carries|build|builds|fix|fixes|grow|grows|change|changes|remember|remembers|believe|believes|feel|feels|think|thinks|know|knows|see|sees|look|looks|hear|hears|read|reads|write|writes|drive|drives|speak|speaks|listen|listens|enjoy|enjoys|prefer|prefers|drink|drinks|play|plays|watch|watches|grab|grabs|head|heads|miss|misses|lose|loses|fall|falls|stand|stands|sit|sits|put|puts|leave|leaves|let|lets|allow|allows|manage|manages|handle|handles|practice|practices)\b/i;
+    const VERBS = /\b(have|has|get|gets|make|makes|take|takes|do|does|go|goes|come|comes|give|gives|eat|eats|run|runs|work|works|like|likes|love|loves|hate|hates|need|needs|want|wants|use|uses|find|finds|keep|keeps|bring|brings|buy|buys|sell|sells|help|helps|start|starts|stop|stops|finish|finishes|open|opens|close|closes|send|sends|call|calls|meet|meets|visit|visits|check|checks|walk|walks|talk|talks|tell|tells|ask|asks|show|shows|pay|pays|spend|spends|save|saves|teach|teaches|learn|learns|choose|chooses|decide|decides|plan|plans|try|tries|move|moves|stay|stays|sleep|sleeps|wake|wakes|cook|cooks|clean|cleans|hold|holds|wear|wears|carry|carries|build|builds|fix|fixes|grow|grows|change|changes|remember|remembers|believe|believes|feel|feels|think|thinks|know|knows|see|sees|look|looks|hear|hears|read|reads|write|writes|drive|drives|speak|speaks|listen|listens|enjoy|enjoys|prefer|prefers|drink|drinks|play|plays|watch|watches|grab|grabs|head|heads|miss|misses|lose|loses|fall|falls|stand|stands|sit|sits|put|puts|leave|leaves|let|lets|allow|allows|manage|manages|handle|handles|practice|practices|went|came|had|got|made|took|did|gave|saw|knew|felt|thought|told|found|kept|bought|brought|left|ran|ate|wore|lost|met|spent|stood|broke|sat|wrote|won|said|drove|slept|sent|built|held|paid|grew|heard|meant|spoke|taught|chose|woke|fell|began|drank|sang|swam|drew|flew|threw|caught|fought|forgot|forgave)\b/i;
     const m = sentence.match(VERBS);
     return m ? m[0].toLowerCase() : null;
   },
 
-  /* ── 부정문 만들기 ──
-     "I go" → "I don't go"
-     "He goes" → "He doesn't go"
-     be동사 문장도 처리 */
+  /* ─── 부정문 (makeNegative) ───
+     과거/현재/미래 모두 처리 */
   makeNegative(sentence) {
     let s = sentence.trim();
-    // be동사 처리
-    if (/^I am\b/i.test(s))       return s.replace(/^I am\b/i, "I'm not");
-    if (/^He is\b/i.test(s))      return s.replace(/^He is\b/i, "He isn't");
-    if (/^She is\b/i.test(s))     return s.replace(/^She is\b/i, "She isn't");
-    if (/^It is\b/i.test(s))      return s.replace(/^It is\b/i, "It isn't");
-    if (/^They are\b/i.test(s))   return s.replace(/^They are\b/i, "They aren't");
-    if (/^We are\b/i.test(s))     return s.replace(/^We are\b/i, "We aren't");
-    if (/^You are\b/i.test(s))    return s.replace(/^You are\b/i, "You aren't");
-    // already has don't/doesn't → add "not" after first verb
-    if (/^(I|You|We|They) (don't|do not)\b/i.test(s)) return s; // 이미 부정
-    // 3인칭 단수 (He/She/It) → doesn't + 동사원형
+    // 이미 부정문
+    if (/\b(don't|doesn't|didn't|won't|can't|isn't|aren't|wasn't|weren't|not)\b/i.test(s)) return s;
+
+    // 미래: "will" → "won't"
+    if (/\bwill\b/i.test(s)) return s.replace(/\bwill\b/i, "won't");
+
+    // be동사
+    if (/^I am\b/i.test(s))       return s.replace(/^I am\b/i,       "I'm not");
+    if (/^He is\b/i.test(s))      return s.replace(/^He is\b/i,      "He isn't");
+    if (/^She is\b/i.test(s))     return s.replace(/^She is\b/i,     "She isn't");
+    if (/^It is\b/i.test(s))      return s.replace(/^It is\b/i,      "It isn't");
+    if (/^They are\b/i.test(s))   return s.replace(/^They are\b/i,   "They aren't");
+    if (/^We are\b/i.test(s))     return s.replace(/^We are\b/i,     "We aren't");
+    if (/^You are\b/i.test(s))    return s.replace(/^You are\b/i,    "You aren't");
+    if (/^I was\b/i.test(s))      return s.replace(/^I was\b/i,      "I wasn't");
+    if (/^He was\b/i.test(s))     return s.replace(/^He was\b/i,     "He wasn't");
+    if (/^She was\b/i.test(s))    return s.replace(/^She was\b/i,    "She wasn't");
+    if (/^They were\b/i.test(s))  return s.replace(/^They were\b/i,  "They weren't");
+    if (/^We were\b/i.test(s))    return s.replace(/^We were\b/i,    "We weren't");
+
+    // 과거 시제: 동사 → "didn't + 원형"
+    const verb = this.extractVerb(s);
+    if (verb && this.isPastTense(verb)) {
+      const base = this.toBase(verb);
+      return s.replace(new RegExp('\\b' + verb + '\\b', 'i'), "didn't " + base);
+    }
+
+    // 3인칭 단수 현재: "He eats" → "He doesn't eat"
     const m3 = s.match(/^(He|She|It)\s+(\w+)(.*)/i);
     if (m3) {
-      const v = m3[2].toLowerCase();
-      const baseV = v.replace(/ies$/, 'y').replace(/es$/, '').replace(/s$/, '');
-      if (!['was','were','had','did'].includes(v)) {
-        return `${m3[1]} doesn't ${baseV}${m3[3]}`;
-      }
+      const v    = m3[2].toLowerCase();
+      const base = v.replace(/ies$/,'y').replace(/es$/,'').replace(/s$/,'');
+      return `${m3[1]} doesn't ${base}${m3[3]}`;
     }
-    // I/You/We/They → don't + 동사원형
+
+    // 1·2인칭 현재: "I go" → "I don't go"
     const m1 = s.match(/^(I|You|We|They)\s+(\w+)(.*)/i);
-    if (m1) {
-      const v = m1[2].toLowerCase();
-      if (!['am','are','was','were','had','did'].includes(v)) {
-        return `${m1[1]} don't ${v}${m1[3]}`;
-      }
+    if (m1 && !['am','are','was','were'].includes(m1[2].toLowerCase())) {
+      return `${m1[1]} don't ${m1[2].toLowerCase()}${m1[3]}`;
     }
-    return "I don't " + s.charAt(0).toLowerCase() + s.slice(1).replace(/\.\s*$/, '') + '.';
+
+    return "I don't " + s.charAt(0).toLowerCase() + s.slice(1).replace(/\.\s*$/,'') + '.';
   },
 
-  /* ── 의문문 만들기 ──
-     "I go" → "Do you go?"
-     "He goes" → "Does he go?"
-     be동사 문장도 처리 */
+  /* ─── 의문문 (makeQuestion) ───
+     과거/현재/미래 + be동사 처리 */
   makeQuestion(sentence) {
     let s = sentence.trim().replace(/\.\s*$/, '');
-    // be동사 처리
-    if (/^I am\b/i.test(s))     return 'Am I '   + s.replace(/^I am\s*/i, '') + '?';
-    if (/^He is\b/i.test(s))    return 'Is he '  + s.replace(/^He is\s*/i, '') + '?';
-    if (/^She is\b/i.test(s))   return 'Is she ' + s.replace(/^She is\s*/i, '') + '?';
-    if (/^It is\b/i.test(s))    return 'Is it '  + s.replace(/^It is\s*/i, '') + '?';
-    if (/^They are\b/i.test(s)) return 'Are they '+ s.replace(/^They are\s*/i, '') + '?';
-    if (/^We are\b/i.test(s))   return 'Are we ' + s.replace(/^We are\s*/i, '') + '?';
-    // 3인칭 단수
+
+    // 미래: "will" → "Will 주어 동사?"
+    const futM = s.match(/^(I|He|She|We|They|You)\s+will\s+(.*)/i);
+    if (futM) return `Will ${futM[1].toLowerCase() === 'i' ? 'you' : futM[1].toLowerCase()} ${futM[2]}?`;
+
+    // be동사 현재
+    if (/^I am\b/i.test(s))      return 'Am I '    + s.replace(/^I am\s*/i, '')      + '?';
+    if (/^He is\b/i.test(s))     return 'Is he '   + s.replace(/^He is\s*/i, '')     + '?';
+    if (/^She is\b/i.test(s))    return 'Is she '  + s.replace(/^She is\s*/i, '')    + '?';
+    if (/^It is\b/i.test(s))     return 'Is it '   + s.replace(/^It is\s*/i, '')     + '?';
+    if (/^They are\b/i.test(s))  return 'Are they '+ s.replace(/^They are\s*/i, '')  + '?';
+    if (/^We are\b/i.test(s))    return 'Are we '  + s.replace(/^We are\s*/i, '')    + '?';
+    if (/^You are\b/i.test(s))   return 'Are you ' + s.replace(/^You are\s*/i, '')   + '?';
+    // be동사 과거
+    if (/^I was\b/i.test(s))     return 'Was I '   + s.replace(/^I was\s*/i, '')     + '?';
+    if (/^He was\b/i.test(s))    return 'Was he '  + s.replace(/^He was\s*/i, '')    + '?';
+    if (/^She was\b/i.test(s))   return 'Was she ' + s.replace(/^She was\s*/i, '')   + '?';
+    if (/^They were\b/i.test(s)) return 'Were they '+ s.replace(/^They were\s*/i,'') + '?';
+
+    // 과거 시제: "I went" → "Did you go?"
+    const verb = this.extractVerb(s);
+    if (verb && this.isPastTense(verb)) {
+      const base    = this.toBase(verb);
+      const subjM   = s.match(/^(I|He|She|We|They|You)\b/i);
+      const subj    = subjM ? subjM[1] : 'you';
+      const subjQ   = subj.toLowerCase() === 'i' ? 'you' : subj.toLowerCase();
+      const rest    = s.replace(/^\S+\s+\S+\s*/,'');
+      return `Did ${subjQ} ${base}${rest ? ' ' + rest : ''}?`;
+    }
+
+    // 3인칭 단수 현재: "He eats" → "Does he eat?"
     const m3 = s.match(/^(He|She|It)\s+(\w+)(.*)/i);
     if (m3) {
-      const v = m3[2].toLowerCase();
-      const baseV = v.replace(/ies$/, 'y').replace(/es$/, '').replace(/s$/, '');
-      return `Does ${m3[1].toLowerCase()} ${baseV}${m3[3]}?`;
+      const v    = m3[2].toLowerCase();
+      const base = v.replace(/ies$/,'y').replace(/es$/,'').replace(/s$/,'');
+      return `Does ${m3[1].toLowerCase()} ${base}${m3[3]}?`;
     }
-    // I → Do you
+
+    // 1인칭: "I go" → "Do you go?"
     const m1 = s.match(/^I\s+(\w+)(.*)/i);
-    if (m1) {
-      const v = m1[1].toLowerCase();
-      if (!['am','was'].includes(v)) return `Do you ${v}${m1[2]}?`;
+    if (m1 && !['am','was'].includes(m1[1].toLowerCase())) {
+      return `Do you ${m1[1].toLowerCase()}${m1[2]}?`;
     }
+
     return 'Do you ' + s.charAt(0).toLowerCase() + s.slice(1) + '?';
   },
 
-  /* ── 시제 변환 ──
-     tense: 'past' | 'future' | 'progressive' */
+  /* ─── 시제 변환 (changeTense) ─── */
   changeTense(sentence, tense) {
-    const s = sentence.trim();
-    const verb = VB.extractVerb(s);
-    if (!verb) return s;
+    let s = sentence.trim().replace(/\.\s*$/, ''); // 마침표 제거
+    const verb = this.extractVerb(s);
+    if (!verb) return sentence;
+
     if (tense === 'past') {
-      const past = VB.toPast(verb);
-      return s.replace(new RegExp('\\b' + verb + '\\b', 'i'), past)
-               .replace(/\.$/, ' yesterday.');
+      const past = this.toPast(verb);
+      return s.replace(new RegExp('\\b' + verb + '\\b','i'), past) + ' yesterday.';
     }
     if (tense === 'future') {
-      return s.replace(/^(I|He|She|We|They|You)\s+/i, '$1 will ')
-               .replace(new RegExp('\\b' + verb + 's?\\b', 'i'), verb.replace(/s$/, ''))
-               .replace(/\.$/, ' tomorrow.');
+      // "He eats" → "He will eat" (3인칭 s 제거)
+      const base = verb.replace(/ies$/,'y').replace(/es$/,'').replace(/s$/,'');
+      const withWill = s.replace(new RegExp('\\b' + verb + '\\b','i'), 'will ' + base);
+      return withWill + ' tomorrow.';
     }
     if (tense === 'progressive') {
-      const aux = /^(He|She|It)\s/i.test(s) ? 'is'
-                : /^(We|They|You)\s/i.test(s) ? 'are' : 'am';
-      const ing = VB.toIng(verb);
-      return s.replace(/^(I|He|She|We|They|You)\s+/i, `$1 ${aux} `)
-               .replace(new RegExp('\\b' + verb + 's?\\b', 'i'), ing)
-               .replace(/\.$/, ' now.');
+      const aux = /^(He|She|It)\s/i.test(s) ? 'is' : /^(We|They|You)\s/i.test(s) ? 'are' : 'am';
+      const ing = this.toIng(verb.replace(/s$/,''));
+      const base = verb.replace(/ies$/,'y').replace(/es$/,'').replace(/s$/,'');
+      const withAux = s.replace(new RegExp('\\b' + verb + '\\b','i'), aux + ' ' + ing);
+      return withAux + ' now.';
     }
-    return s;
+    return sentence;
   },
 
-  /* ── 동사 교체 ──
-     문장의 주동사를 newVerb로 교체 */
+  /* ─── 동사 교체 (replaceVerb) ─── */
   replaceVerb(sentence, newVerb) {
-    const orig = VB.extractVerb(sentence);
+    const orig = this.extractVerb(sentence);
     if (!orig) return sentence;
-    return sentence.replace(new RegExp('\\b' + orig + 's?\\b', 'i'), newVerb);
+    // 3인칭 s가 있으면 새 동사에도 붙이기
+    const has3rd = /^(He|She|It)\s/i.test(sentence);
+    const finalVerb = has3rd ? this.to3rd(newVerb) : newVerb;
+    return sentence.replace(new RegExp('\\b' + orig + '\\b','i'), finalVerb);
   },
 
-  /* ── 주어 교체 ──
-     I → He/She/We/They, 3인칭일 경우 동사에 -s 추가 */
+  /* ─── 주어 교체 (changeSubject) ───
+     원문 주어 자동 감지 → 대명사·소유격·목적격 모두 교체
+     → 동사 인칭 일치 */
   changeSubject(sentence, newSubj) {
-    let s = sentence;
-    const verb = VB.extractVerb(s);
-    const isThird = ['He','She','It'].includes(newSubj);
-    s = s.replace(/^I\b/, newSubj)
-         .replace(/\bmy\b/gi,  newSubj === 'He' ? 'his' : newSubj === 'She' ? 'her' : 'their')
-         .replace(/\bme\b/gi,  newSubj.toLowerCase());
-    if (isThird && verb) {
-      s = s.replace(new RegExp('\\b' + verb + '\\b', 'i'), VB.to3rd(verb));
+    let s = sentence.trim();
+
+    // 원문 주어 감지
+    const subjMatch = s.match(/^(I|He|She|We|They|You|It)\b/i);
+    if (!subjMatch) return s;
+    const origSubj = subjMatch[1];
+
+    // 대명사 매핑
+    const POSS = { I:'my', He:'his', She:'her', We:'our', They:'their', You:'your', It:'its' };
+    const OBJ  = { I:'me', He:'him', She:'her', We:'us',  They:'them',  You:'you',  It:'it'  };
+
+    // 1. 주격 교체
+    s = s.replace(new RegExp('^' + origSubj + '\\b','i'), newSubj);
+
+    // 2. 소유격 교체 (my→his 등)
+    const origPoss = POSS[origSubj] || 'my';
+    const newPoss  = POSS[newSubj]  || 'their';
+    if (origPoss !== newPoss) {
+      s = s.replace(new RegExp('\\b' + origPoss + '\\b','gi'), newPoss);
     }
+
+    // 3. 목적격 교체 (me→him 등) — 주어 자신을 지칭할 때
+    const origObj = OBJ[origSubj] || 'me';
+    const newObj  = OBJ[newSubj]  || 'them';
+    if (origObj !== newObj && origObj !== origPoss) {
+      s = s.replace(new RegExp('\\b' + origObj + '\\b','gi'), newObj);
+    }
+
+    // 4. 동사 인칭 일치 조정
+    const verb = this.extractVerb(s);
+    if (verb) {
+      const is3rdNew  = ['He','She','It'].includes(newSubj);
+      const is3rdOrig = ['He','She','It'].includes(origSubj);
+
+      if (is3rdNew && !is3rdOrig) {
+        // 원형 → 3인칭 단수
+        const base3 = verb.replace(/s$/,'');
+        s = s.replace(new RegExp('\\b' + base3 + '\\b','i'), this.to3rd(base3));
+      } else if (!is3rdNew && is3rdOrig) {
+        // 3인칭 → 원형 (s 제거)
+        const base = verb.replace(/ies$/,'y').replace(/es$/,'').replace(/s$/,'');
+        s = s.replace(new RegExp('\\b' + verb + '\\b','i'), base);
+      }
+    }
+
     return s;
   },
 
-  /* ── buildVariations: 오케스트레이터 ──
-     type에 따라 적절한 변환 함수들을 호출하고 결과 배열 반환
-     각 row: { badge, cls, ko, en } */
+  /* ─── 통합 변환 (buildVariations) ─── */
   buildVariations(en, ko, type) {
     const rows = [];
     try {
       if (type === 'pnq') {
-        /* 긍정 → 부정 → 질문 → 긍정답 → 부정답 */
+        /* 긍정 → 부정 → 의문 → Yes/No 답변 */
         rows.push({ badge:'긍정', cls:'vr-pos', ko, en });
-        const neg = VB.makeNegative(en);
-        const negKo = ko.replace(/한다\.$/, '하지 않는다.').replace(/있다\.$/, '없다.').replace(/간다\.$/, '가지 않는다.');
-        rows.push({ badge:'부정', cls:'vr-neg', ko: negKo !== ko ? negKo : '~하지 않는다.', en: neg });
-        const q = VB.makeQuestion(en);
-        const qKo = ko.replace(/한다\.$/, '하나요?').replace(/있다\.$/, '있나요?').replace(/간다\.$/, '가나요?');
-        rows.push({ badge:'질문',   cls:'vr-q',   ko: qKo !== ko ? qKo : '~하나요?', en: q });
-        rows.push({ badge:'긍정 답', cls:'vr-pos', ko:'네, ~합니다.',         en:"Yes, I do.  /  Yes, I am." });
-        rows.push({ badge:'부정 답', cls:'vr-neg', ko:'아니요, ~하지 않습니다.', en:"No, I don't.  /  No, I'm not." });
+
+        const neg = this.makeNegative(en);
+        rows.push({ badge:'부정', cls:'vr-neg',
+          ko: ko.replace(/한다\.$|있다\.$|간다\.$|먹는다\.$/, m => m.replace(/다\.$/, '지 않는다.')),
+          en: neg });
+
+        const q = this.makeQuestion(en);
+        rows.push({ badge:'질문', cls:'vr-q',
+          ko: ko.replace(/한다\.$|있다\.$|간다\.$/, m => m.replace(/다\.$/, '나요?')),
+          en: q });
+
+        rows.push({ badge:'긍정 답', cls:'vr-pos', ko:'네, 그래요.', en:"Yes, I do.  /  Yes, I am." });
+        rows.push({ badge:'부정 답', cls:'vr-neg', ko:'아니요, 아니에요.', en:"No, I don't.  /  No, I'm not." });
 
       } else if (type === 'tense') {
-        /* 현재 → 과거 → 미래 → 진행 → 부정 */
+        /* 현재 → 과거 → 미래 → 진행 → 과거부정 */
         rows.push({ badge:'현재',   cls:'vr-pos',  ko, en });
-        rows.push({ badge:'과거',   cls:'vr-past', ko: ko.replace(/한다\.$/, '했다.').replace(/간다\.$/, '갔다.').replace(/먹는다\.$/, '먹었다.'), en: VB.changeTense(en, 'past') });
-        rows.push({ badge:'미래',   cls:'vr-fut',  ko: ko.replace(/한다\.$/, '할 것이다.').replace(/간다\.$/, '갈 것이다.'), en: VB.changeTense(en, 'future') });
-        rows.push({ badge:'진행형', cls:'vr-prog', ko: ko.replace(/한다\.$/, '하고 있다.').replace(/간다\.$/, '가고 있다.'), en: VB.changeTense(en, 'progressive') });
-        rows.push({ badge:'부정',   cls:'vr-neg',  ko: ko.replace(/한다\.$/, '하지 않는다.').replace(/간다\.$/, '가지 않는다.'), en: VB.makeNegative(en) });
+        rows.push({ badge:'과거',   cls:'vr-past',
+          ko: ko.replace(/한다\.$/, '했다.').replace(/간다\.$/, '갔다.').replace(/먹는다\.$/, '먹었다.').replace(/있다\.$/, '있었다.'),
+          en: this.changeTense(en, 'past') });
+        rows.push({ badge:'미래',   cls:'vr-fut',
+          ko: ko.replace(/한다\.$/, '할 것이다.').replace(/간다\.$/, '갈 것이다.').replace(/먹는다\.$/, '먹을 것이다.'),
+          en: this.changeTense(en, 'future') });
+        rows.push({ badge:'진행',   cls:'vr-prog',
+          ko: ko.replace(/한다\.$/, '하고 있다.').replace(/간다\.$/, '가고 있다.').replace(/먹는다\.$/, '먹고 있다.'),
+          en: this.changeTense(en, 'progressive') });
+        rows.push({ badge:'과거부정', cls:'vr-neg',
+          ko: ko.replace(/한다\.$/, '하지 않았다.').replace(/간다\.$/, '가지 않았다.'),
+          en: this.makeNegative(this.changeTense(en, 'past')) });
 
       } else if (type === 'verb') {
-        /* 같은 구조에서 동사만 교체 */
+        /* 동사 교체 */
         rows.push({ badge:'원문', cls:'vr-pos', ko, en });
-        const verb = VB.extractVerb(en);
+        const verb = this.extractVerb(en);
         const ALTS = {
-          have:['get','own','hold'],   get:['have','obtain','grab'],
-          make:['create','build','prepare'], take:['grab','get','carry'],
-          do:['complete','finish','handle'], go:['head','travel','walk'],
-          come:['arrive','visit','appear'], eat:['have','grab','enjoy'],
-          like:['love','enjoy','prefer'], want:['need','desire','wish for'],
-          need:['want','require','lack'], work:['function','operate','run'],
-          see:['notice','observe','spot'], know:['understand','realize','remember'],
-          feel:['sense','experience','find'], think:['believe','consider','imagine'],
-          use:['utilize','apply','try'], help:['assist','support','guide'],
-          start:['begin','launch','kick off'], stop:['quit','end','finish'],
-          run:['manage','jog','operate'], call:['phone','contact','ring'],
-          buy:['purchase','pick up','order'], send:['deliver','submit','forward'],
-          keep:['maintain','continue','hold'], find:['discover','notice','locate'],
-          love:['adore','enjoy','appreciate'], play:['practice','enjoy','do'],
-          watch:['observe','see','check'], drink:['have','sip','enjoy'],
+          have:['get','own','hold'],   has:['gets','owns','holds'],
+          get:['have','obtain','receive'], gets:['has','obtains','receives'],
+          make:['create','build','prepare'], makes:['creates','builds','prepares'],
+          take:['grab','get','carry'],  takes:['grabs','gets','carries'],
+          do:['complete','finish','handle'], does:['completes','finishes','handles'],
+          go:['head','travel','walk'],   goes:['heads','travels','walks'],
+          come:['arrive','visit','appear'], comes:['arrives','visits','appears'],
+          eat:['have','enjoy','grab'],   eats:['has','enjoys','grabs'],
+          like:['love','enjoy','prefer'], likes:['loves','enjoys','prefers'],
+          want:['need','wish for','hope for'], wants:['needs','wishes for','hopes for'],
+          need:['want','require','miss'], needs:['wants','requires','misses'],
+          work:['operate','function','run'], works:['operates','functions','runs'],
+          see:['notice','observe','spot'], sees:['notices','observes','spots'],
+          know:['understand','realize','remember'], knows:['understands','realizes','remembers'],
+          think:['believe','feel','consider'], thinks:['believes','feels','considers'],
+          use:['try','apply','utilize'], uses:['tries','applies','utilizes'],
+          help:['assist','support','guide'], helps:['assists','supports','guides'],
+          start:['begin','launch','kick off'], starts:['begins','launches','kicks off'],
+          run:['manage','operate','control'], runs:['manages','operates','controls'],
+          buy:['purchase','pick up','order'], buys:['purchases','picks up','orders'],
+          keep:['maintain','continue','hold'], keeps:['maintains','continues','holds'],
+          love:['adore','cherish','treasure'], loves:['adores','cherishes','treasures'],
+          play:['practice','enjoy','do'], plays:['practices','enjoys','does'],
+          watch:['observe','see','check'], watches:['observes','sees','checks'],
+          drink:['have','enjoy','sip'], drinks:['has','enjoys','sips'],
         };
         const alts = (ALTS[verb] || ['do','complete','handle']).slice(0, 3);
-        alts.forEach(sw => rows.push({ badge: sw, cls:'vr-verb', ko:`"${sw}"로 교체`, en: VB.replaceVerb(en, sw) }));
-        rows.push({ badge:'팁', cls:'vr-q', ko:'동사만 바꿔도 다른 문장!', en:'Changing the verb creates a completely different nuance.' });
+        alts.forEach(sw => rows.push({
+          badge: sw, cls:'vr-verb',
+          ko: `"${sw}"로 교체`,
+          en: this.replaceVerb(en, sw.split(' ')[0]) // 복합동사 첫 단어만
+        }));
+        rows.push({ badge:'팁', cls:'vr-q', ko:'동사 하나가 바뀌면 뉘앙스가 달라져요!', en:'Changing the verb creates a completely different nuance.' });
 
       } else if (type === 'subj') {
-        /* 주어 교체 (I / He / She / We / They) */
-        [
-          { subj:'I',    ko:'나는',    cls:'vr-pos' },
-          { subj:'He',   ko:'그는',    cls:'vr-fut' },
-          { subj:'She',  ko:'그녀는',  cls:'vr-fut' },
-          { subj:'We',   ko:'우리는',  cls:'vr-prog' },
-          { subj:'They', ko:'그들은',  cls:'vr-prog' },
-        ].forEach(({ subj, ko: sk, cls }) => {
-          const newKo = ko.replace(/나는/, sk).replace(/내/, subj === 'He' ? '그의' : subj === 'She' ? '그녀의' : '우리의');
-          rows.push({ badge:`${subj} (${sk.replace('는','')})`, cls, ko: newKo, en: VB.changeSubject(en, subj) });
-        });
+        /* 주어 교체 — 원문 주어 자동 감지, 주격 조사 포함 */
+
+        // 원문 주어 감지
+        const subjMatch = en.match(/^(I|He|She|We|They|You|It)\b/i);
+        const origSubj  = subjMatch ? subjMatch[1].charAt(0).toUpperCase() + subjMatch[1].slice(1).toLowerCase() : 'I';
+
+        // 전체 주어 풀 (주격 조사 포함)
+        const SUBJ_POOL = [
+          { subj:'I',    ko:'나는(저는)',  cls:'vr-pos'  },
+          { subj:'He',   ko:'그는',        cls:'vr-fut'  },
+          { subj:'She',  ko:'그녀는',      cls:'vr-fut'  },
+          { subj:'We',   ko:'우리는',      cls:'vr-prog' },
+          { subj:'They', ko:'그들은',      cls:'vr-prog' },
+          { subj:'You',  ko:'당신은',      cls:'vr-q'    },
+        ];
+
+        // 1. 원문 주어 먼저 표시
+        rows.push({ badge:`${origSubj} — 원문`, cls:'vr-pos', ko, en });
+
+        // 2. 나머지 주어 (원문 주어 제외, 교체된 문장)
+        SUBJ_POOL
+          .filter(sp => sp.subj !== origSubj)
+          .forEach(({ subj, ko: koLabel, cls }) => {
+            const newEn = this.changeSubject(en, subj);
+            rows.push({ badge:`${subj} (${koLabel})`, cls, ko: koLabel, en: newEn });
+          });
       }
     } catch(e) {
       console.warn('VB.buildVariations error:', e);
@@ -2882,7 +3084,7 @@ const VB = {
     }
     return rows;
   },
-};
+}._init();
 
 /* ============================================================
    SRS (Spaced Repetition System) — 망각곡선 복습 스케줄러
@@ -3712,26 +3914,13 @@ function renderVoiceList() {
     return a.name.localeCompare(b.name);
   });
 
-  // ── 맨 위: "시스템 기본 사용" 옵션 ──
-  // iOS에서 Zoe처럼 getVoices()에 안 잡히는 음성 사용 가능
+  // 시스템 기본 버튼 UI 업데이트
   const isSystemMode = (selectedVoiceName === '__system__');
-  const systemOption = `
-    <div onclick="selectVoiceByName('__system__')"
-      style="display:flex;align-items:center;gap:10px;padding:13px 14px;
-        background:${isSystemMode ? 'var(--adim)' : 'var(--card)'};
-        border:2px solid ${isSystemMode ? 'var(--accent)' : 'var(--border)'};
-        border-radius:12px;cursor:pointer;margin-bottom:10px;transition:all .2s">
-      <div style="flex:1">
-        <div style="display:flex;align-items:center;gap:6px;margin-bottom:3px">
-          <span style="font-size:14px;font-weight:700">📱 시스템 기본 음성 (권장)</span>
-          ${isSystemMode ? '<span style="color:var(--ok);font-size:16px;margin-left:auto">✓</span>' : ''}
-        </div>
-        <div style="font-size:12px;color:var(--muted);line-height:1.6">
-          iPhone 설정의 음성을 자동 사용<br>
-          <b style="color:var(--accent)">Zoe처럼 목록에 없어도 작동</b>합니다
-        </div>
-      </div>
-    </div>`;
+  const sysBtn   = Utils.el('sys-voice-btn');
+  const sysCheck = Utils.el('sys-check');
+  if (sysBtn)   sysBtn.style.border   = isSystemMode ? '2px solid var(--accent)' : '2px solid var(--border)';
+  if (sysBtn)   sysBtn.style.background= isSystemMode ? 'var(--adim)' : 'var(--card)';
+  if (sysCheck) sysCheck.style.display = isSystemMode ? 'block' : 'none';
 
   // ── 현재 선택 음성 배너 ──
   const cur = sorted.find(v => v.name === selectedVoiceName);
@@ -3750,7 +3939,7 @@ function renderVoiceList() {
     </div>` : '';
 
   // ── 음성 목록 렌더 ──
-  vl.innerHTML = systemOption + curBanner + sorted.map(v => {
+  vl.innerHTML = curBanner + sorted.map(v => {
     const isSel  = v.name === selectedVoiceName;
     const badge  = voiceQualityBadge(v);
     // 이름에서 따옴표 이스케이프
@@ -4472,16 +4661,18 @@ const VarMode = {
       </div>`).join('');
   },
 
-  /* 행 탭: 첫 탭 = 정답 공개, 두 번째 탭 = TTS 재생 */
+  /* 행 탭: 첫 탭 = 정답 공개 + TTS, 이후 탭 = TTS만 */
   revealRow(i) {
+    const seed = this.getSeed(this.seedIdx);
+    const rows = VB.buildVariations(seed.en, seed.ko, this.type);
+    const text = (rows[i]?.en || '').replace(/<[^>]+>/g,'').split('/')[0].trim();
+
     if (!this.revealed.includes(i)) {
-      this.revealed.push(i); this.renderList();
-    } else {
-      const seed = this.getSeed(this.seedIdx);
-      const rows = VB.buildVariations(seed.en, seed.ko, this.type);
-      const text = (rows[i]?.en || '').replace(/<[^>]+>/g,'').split('/')[0].trim();
-      if (text) speakEn(text);
+      this.revealed.push(i);
+      this.renderList();
     }
+    // 첫 탭부터 바로 TTS 재생
+    if (text && text.length > 3) speakEn(text);
   },
 
   revealAll() {
@@ -5309,6 +5500,11 @@ setQuizLevel = function(lv) {
 /* answer-inline 플레이스홀더 reset */
 const _origRenderPlain = render;
 
+
+function saveOpenAIKey(){ alert('준비 중입니다.'); }
+function selectOpenAIVoice(v){}
+function clearOpenAIKey(){}
+function initOpenAI(){}
 /* DOM 준비 완료 후 앱 시작 */
 document.addEventListener('DOMContentLoaded', run);
 
