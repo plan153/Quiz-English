@@ -2763,12 +2763,27 @@ const VB = {
 
   /* 동사 원형 → 3인칭 단수 */
   to3rd(verb) {
-    const v = verb.toLowerCase().replace(/s$/,''); // 이미 s 붙은 경우 제거
-    if (v === 'have') return 'has';                // 불규칙: have→has
+    const v = verb.toLowerCase().replace(/s$/,'');
+    if (v === 'have') return 'has';
+    if (v === 'be')   return 'is';
     if (['go','do'].includes(v)) return v+'es';
     if (/[^aeiou]y$/.test(v)) return v.slice(0,-1)+'ies';
     if (/(s|sh|ch|x|z)$/.test(v)) return v+'es';
     return v+'s';
+  },
+
+  /* 3인칭 현재형 → 원형 (makes→make, watches→watch, carries→carry) */
+  toBase3rd(v) {
+    v = v.toLowerCase();
+    if (v === 'has')  return 'have';
+    if (v === 'does') return 'do';
+    if (v === 'goes') return 'go';
+    if (v === 'is')   return 'be';
+    if (v.endsWith('ies')) return v.slice(0,-3) + 'y';
+    if (/sh$|ch$|ss$|x$|z$/.test(v.slice(0,-2)) && v.endsWith('es')) return v.slice(0,-2);
+    if (/[bcdfghjklmnpqrstvwxyz]es$/.test(v)) return v.slice(0,-1);
+    if (v.endsWith('s')) return v.slice(0,-1);
+    return v;
   },
 
   /* 동사가 과거형인지 판별 */
@@ -2850,7 +2865,7 @@ const VB = {
 
     // ── 비대명사 주어 (동명사구·명사구): 동사 탐지 후 처리 ──
     if (verb) {
-      const base = verb.replace(/ies$/,'y').replace(/es$/,'').replace(/s$/,'');
+      const base = this.toBase3rd(verb);
       return s.replace(new RegExp('\\b' + verb + '\\b', 'i'), "doesn't " + base);
     }
 
@@ -2914,7 +2929,7 @@ const VB = {
       return 'Did ' + rest.charAt(0).toLowerCase() + rest.slice(1) + '?';
     }
     if (verb) {
-      const base = verb.replace(/ies$/,'y').replace(/es$/,'').replace(/s$/,'');
+      const base = this.toBase3rd(verb);
       const rest = s.replace(new RegExp('\\b' + verb + '\\b', 'i'), base);
       return 'Does ' + rest.charAt(0).toLowerCase() + rest.slice(1) + '?';
     }
@@ -3018,6 +3033,75 @@ const VB = {
   },
 
   /* ─── 통합 변환 (buildVariations) ─── */
+  /* 문장이 부정문인지 감지 */
+  isNegative(s) {
+    return /\b(don't|doesn't|didn't|won't|can't|isn't|aren't|wasn't|weren't|couldn't|wouldn't|shouldn't|never|\bnot\b)\b/i.test(s);
+  },
+
+  /* 부정문 → 긍정문 변환 */
+  makePositive(sentence) {
+    let s = sentence.trim();
+    // won't → will
+    s = s.replace(/\bwon't\b/gi, 'will');
+    // can't → can
+    s = s.replace(/\bcan't\b/gi, 'can');
+    // isn't/aren't/wasn't/weren't → is/are/was/were
+    s = s.replace(/\bisn't\b/gi, 'is').replace(/\baren't\b/gi, 'are');
+    s = s.replace(/\bwasn't\b/gi, 'was').replace(/\bweren't\b/gi, 'were');
+    // He/She/It doesn't VERB → He/She/It VERBs
+    s = s.replace(/\b(he|she|it)\s+doesn't\s+(\w+)/gi, (_, subj, verb) =>
+      subj.charAt(0).toUpperCase() + subj.slice(1).toLowerCase() + ' ' + this.to3rd(verb));
+    // I/We/They don't VERB → I/We/They VERB
+    s = s.replace(/\b(I|we|they|you)\s+don't\s+/gi, '$1 ');
+    // didn't VERB → toPast(VERB)
+    s = s.replace(/\b(\w+)\s+didn't\s+(\w+)/gi, (_, subj, verb) =>
+      subj + ' ' + this.toPast(verb));
+    // 나머지 not 제거
+    s = s.replace(/\s+not\b/g, '').replace(/\s+/g,' ').trim();
+    // 첫 글자 대문자
+    return s.charAt(0).toUpperCase() + s.slice(1);
+  },
+
+  /* 한국어 부정 변환 */
+  _koNeg(ko) {
+    if (!ko) return ko;
+    const negMap = [
+      [/한다\.?$/, '하지 않는다.'], [/해요\.?$/, '하지 않아요.'],
+      [/간다\.?$/, '가지 않는다.'], [/온다\.?$/, '오지 않는다.'],
+      [/먹는다\.?$/, '먹지 않는다.'], [/마신다\.?$/, '마시지 않는다.'],
+      [/된다\.?$/, '되지 않는다.'], [/느낀다\.?$/, '느끼지 않는다.'],
+      [/좋아한다\.?$/, '좋아하지 않는다.'], [/싫어한다\.?$/, '싫어하지 않는다.'],
+      [/생각한다\.?$/, '생각하지 않는다.'], [/일한다\.?$/, '일하지 않는다.'],
+      [/공부한다\.?$/, '공부하지 않는다.'], [/운동한다\.?$/, '운동하지 않는다.'],
+      [/이다\.?$/, '이/가 아니다.'], [/있다\.?$/, '없다.'],
+      [/없다\.?$/, '있다.'], [/는다\.?$/, '지 않는다.'],
+      [/ㄴ다\.?$/, '지 않는다.'],
+    ];
+    for (const [pat, rep] of negMap) {
+      if (pat.test(ko)) return ko.replace(pat, rep);
+    }
+    return ko.replace(/\.?$/, ' (부정형).');
+  },
+
+  /* 한국어 질문 변환 */
+  _koQ(ko) {
+    if (!ko) return ko;
+    const qMap = [
+      [/한다\.?$/, '합니까?'], [/해요\.?$/, '해요?'],
+      [/간다\.?$/, '갑니까?'], [/온다\.?$/, '옵니까?'],
+      [/먹는다\.?$/, '먹습니까?'], [/마신다\.?$/, '마십니까?'],
+      [/된다\.?$/, '됩니까?'], [/느낀다\.?$/, '느낍니까?'],
+      [/좋아한다\.?$/, '좋아합니까?'], [/생각한다\.?$/, '생각합니까?'],
+      [/이다\.?$/, '입니까?'], [/있다\.?$/, '있습니까?'],
+      [/없다\.?$/, '없습니까?'], [/는다\.?$/, '습니까?'],
+      [/ㄴ다\.?$/, '습니까?'], [/다\.?$/, '합니까?'],
+    ];
+    for (const [pat, rep] of qMap) {
+      if (pat.test(ko)) return ko.replace(pat, rep);
+    }
+    return ko.replace(/\.?$/, '?');
+  },
+
   /* 동사 타입별 Yes/No 답변 생성 */
   _getYesNo(sentence) {
     const hasFuture = /\bwill\b/i.test(sentence);
@@ -3046,24 +3130,48 @@ const VB = {
     const rows = [];
     try {
       if (type === 'pnq') {
-        /* 긍정 → 부정 → 의문 → Yes/No 답변 */
-        rows.push({ badge:'긍정', cls:'vr-pos', ko, en });
-
-        const neg = this.makeNegative(en);
-        rows.push({ badge:'부정', cls:'vr-neg',
-          ko: ko.replace(/한다\.$|있다\.$|간다\.$|먹는다\.$/, m => m.replace(/다\.$/, '지 않는다.')),
-          en: neg });
-
-        const q = this.makeQuestion(en);
-        rows.push({ badge:'질문', cls:'vr-q',
-          ko: ko.replace(/한다\.$|있다\.$|간다\.$/, m => m.replace(/다\.$/, '나요?')),
-          en: q });
-
+        const alreadyNeg = this.isNegative(en);
         const yn = this._getYesNo(en);
-        rows.push({ badge:'긍정 답', cls:'vr-pos', ko:'네, 그래요.',        en: yn.yes });
-        rows.push({ badge:'부정 답', cls:'vr-neg', ko:'아니요, 아니에요.', en: yn.no });
 
-      } else if (type === 'tense') {
+        if (alreadyNeg) {
+          /* ── 원문이 부정문일 때: 원문→긍정→의문 순서 ── */
+          rows.push({ badge:'원문(부정)', cls:'vr-neg', ko, en });
+
+          // 긍정 변환
+          const pos = this.makePositive(en);
+          const koPos = this._koNeg(ko); // 부정 한국어 → 원래 긍정으로 되돌림(근사치)
+          rows.push({ badge:'긍정형', cls:'vr-pos',
+            ko: koPos !== ko ? koPos : ko + ' (긍정형)',
+            en: pos });
+
+          // 의문문 (긍정형 기반)
+          const q = this.makeQuestion(pos);
+          rows.push({ badge:'의문문', cls:'vr-q',
+            ko: this._koQ(koPos !== ko ? koPos : ko),
+            en: q });
+
+          // Yes/No (긍정형 기반)
+          const ynPos = this._getYesNo(pos);
+          rows.push({ badge:'긍정 답', cls:'vr-pos', ko:'네, 그래요.',        en: ynPos.yes });
+          rows.push({ badge:'부정 답', cls:'vr-neg', ko:'아니요, 아니에요.', en: ynPos.no });
+
+        } else {
+          /* ── 원문이 긍정문일 때: 원문→부정→의문 순서 ── */
+          rows.push({ badge:'긍정', cls:'vr-pos', ko, en });
+
+          const neg = this.makeNegative(en);
+          rows.push({ badge:'부정', cls:'vr-neg',
+            ko: this._koNeg(ko),
+            en: neg });
+
+          const q = this.makeQuestion(en);
+          rows.push({ badge:'의문문', cls:'vr-q',
+            ko: this._koQ(ko),
+            en: q });
+
+          rows.push({ badge:'긍정 답', cls:'vr-pos', ko:'네, 그래요.',        en: yn.yes });
+          rows.push({ badge:'부정 답', cls:'vr-neg', ko:'아니요, 아니에요.', en: yn.no });
+        }} else if (type === 'tense') {
         /* 현재 → 과거 → 미래 → 진행 → 과거부정 */
         rows.push({ badge:'현재',   cls:'vr-pos',  ko, en });
         rows.push({ badge:'과거',   cls:'vr-past',
@@ -3127,12 +3235,13 @@ const VB = {
 
         // 전체 주어 풀 (주격 조사 포함)
         const SUBJ_POOL = [
-          { subj:'I',    ko:'나는(저는)',  cls:'vr-pos'  },
-          { subj:'He',   ko:'그는',        cls:'vr-fut'  },
-          { subj:'She',  ko:'그녀는',      cls:'vr-fut'  },
-          { subj:'We',   ko:'우리는',      cls:'vr-prog' },
-          { subj:'They', ko:'그들은',      cls:'vr-prog' },
-          { subj:'You',  ko:'당신은',      cls:'vr-q'    },
+          { subj:'I',    ko:'나는(저는)',    cls:'vr-pos'  },
+          { subj:'He',   ko:'그는',          cls:'vr-fut'  },
+          { subj:'She',  ko:'그녀는',        cls:'vr-fut'  },
+          { subj:'It',   ko:'그것은',        cls:'vr-verb' },
+          { subj:'We',   ko:'우리는',        cls:'vr-prog' },
+          { subj:'They', ko:'그들은',        cls:'vr-prog' },
+          { subj:'You',  ko:'당신은(너는)',  cls:'vr-q'    },
         ];
 
         // 1. 원문 주어 먼저 표시
@@ -3951,9 +4060,9 @@ function renderVoiceList() {
 
   // ── 영어 음성 목록 (더 넓은 필터) ──
   // lang이 'en'으로 시작하거나 이름에 영어권 음성명이 포함된 것
+  // 영어 음성만 표시 (lang이 'en'으로 시작하는 것 + iOS Zoe 대응)
   const enVoices = speechVoices.filter(v =>
-    /^en/i.test(v.lang) ||
-    /Zoe|Ava|Samantha|Evan|Karen|Daniel|Moira|Arthur|Rishi|Nora|Shelley|Aaron|Nathan|Tom|Victoria|Alex|Fred|Junior|Kathy|Princess|Ralph|Bahh|Bells|Boing|Bubbles|Cellos|Deranged|GoodNews|Hysterical|Organ|Trinoids|Whisper|Zarvox/i.test(v.name)
+    /^en/i.test(v.lang) || v.default
   );
 
   if (!enVoices.length) {
