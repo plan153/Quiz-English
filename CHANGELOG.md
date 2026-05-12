@@ -5,6 +5,52 @@
 
 ---
 
+## [1.6.0] — 2026-05-12
+
+### 추가 (Added)
+- 🧠 **VAR_DB — 500문장 변형 사전 생성 DB**
+  - Claude가 직접 500문장 × pnq 변형 일괄 생성
+  - 긍정 씨앗 398개: 부정문/의문문/한국어 사전 계산
+  - 부정 씨앗 102개: 긍정형/의문문/한국어 사전 계산
+  - `buildVariations('pnq')` 호출 시 VAR_DB 우선 참조
+  - VAR_DB 미존재 시 규칙 기반 VB 코드로 fallback
+  - 145KB 데이터 → 즉시 응답 (API 호출 없음)
+- 📄 **CLAUDE.md 추가**
+  - Andrej Karpathy 코딩 가이드라인 통합
+  - 프로젝트 아키텍처 문서화
+  - 개발 규칙 (버전 관리, localStorage 키 등)
+
+### 개선 (Improved)
+- 복잡 주어 부정/의문문 정확도 대폭 향상
+  - "My nephew has" → "My nephew doesn't have" / "Does my nephew have?" ✅
+  - "Running usually makes" → "doesn't make" / "Does...make?" ✅
+  - "Losing his business made" → "didn't make" / "Did...make?" ✅
+- Yes/No 답변 과거형 수정: "Yes, it does." → "Yes, it did." (과거 문장)
+- 부정 씨앗 의문문: 의문문 형태 수정 "These pants don't?" → "Do these pants have?" ✅
+- 종속절 can 처리: "I don't think we can" → Yes: "Yes, I do." (not "Yes, I can.") ✅
+
+## [1.5.0] — 2026-05-12
+
+### 수정 (Fixed)
+- 🔄 **부정 씨앗 문장 변형 완성**
+  - [긍정형] 씨앗이 부정이면 긍정으로 변환
+    - ~~"I don't think..."~~ → **"I think we can get a place in Gangnam."** ✅
+    - 한국어: "집 못 얻을 듯해." → "집 얻을 듯해." ✅
+  - [부정] 씨앗이 이미 부정이면 완전히 제거 (중복 방지)
+  - [의문문] 부정 의문문 형태 `makeNegativeQuestion()` 신규 추가
+    - ~~"Do you don't think...?"~~ → **"Don't you think...?"** ✅
+    - "She doesn't like it." → **"Doesn't she like it?"** ✅
+    - "He didn't go." → **"Didn't he go?"** ✅
+    - "I won't go." → **"Won't you go?"** ✅
+  - 한국어 의문문: 원문 + "?" ✅
+
+### 추가 (Added)
+- `makeNegativeQuestion(s)` — 부정 의문문 전용 함수
+- `_koPos(ko)` — 부정 한국어 → 긍정 근사 변환 (못→제거, 없다→있다 등)
+
+### 테스트 결과
+- pnq 전수 테스트: 7/7 통과
+
 ## [1.4.0] — 2026-05-12
 
 ### 수정 (Fixed)
