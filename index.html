@@ -2,7 +2,7 @@
 <html lang="ko">
 <!--
   ============================================================
-  기본동사 영작퀴즈 (English Verb Quiz) — Version: v1.6.0
+  기본동사 영작퀴즈 (English Verb Quiz) — Version: v1.7.0
   ============================================================
   목적:
     한국어 문장을 보고 영어로 말하는 연습을 돕는 PWA 앱.
@@ -1257,6 +1257,123 @@ body {
   background: var(--adim); color: var(--accent);
   border-color: rgba(123,110,246,.4);
 }
+
+/* ── 교육 흐름 개선 CSS ────────────────────── */
+
+/* 한국어 문장: 더 크고 임팩트 있게 */
+.ko-sentence {
+  font-size: clamp(22px, 5.5vw, 28px) !important;
+  font-weight: 700 !important;
+  line-height: 1.45 !important;
+  letter-spacing: -0.3px !important;
+  color: #ffffff !important;
+  margin-bottom: 18px !important;
+  word-break: keep-all !important;
+}
+
+/* "다시 듣기" 버튼: 작고 세련되게 */
+.ko-tts-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 13px !important;
+  color: rgba(255,255,255,0.45) !important;
+  background: none !important;
+  border: none !important;
+  cursor: pointer;
+  padding: 4px 0 !important;
+  margin-bottom: 20px !important;
+  letter-spacing: 0.2px;
+  transition: color 0.2s;
+}
+.ko-tts-btn:hover { color: rgba(255,255,255,0.75) !important; }
+.ko-tts-btn:active { transform: scale(0.96); }
+
+/* autoKo 재생 중 표시 (pulse ring on sentence area) */
+.ko-sentence.playing {
+  animation: koPlayPulse 0.4s ease;
+}
+@keyframes koPlayPulse {
+  0%   { opacity: 1; }
+  30%  { opacity: 0.7; }
+  100% { opacity: 1; }
+}
+
+/* 정답 인라인 결과 영역 */
+.answer-inline {
+  min-height: 0 !important;
+  transition: min-height 0.3s;
+}
+.answer-inline.has-content {
+  min-height: 28px !important;
+}
+
+/* 피드백 시트: 모범 답안 더 크게 */
+.fb-model-ans {
+  background: rgba(255,255,255,0.05) !important;
+  border-radius: 12px !important;
+  padding: 14px 16px !important;
+  margin: 10px 0 !important;
+}
+.fb-model-ans small {
+  font-size: 11px !important;
+  color: var(--muted) !important;
+  display: block;
+  margin-bottom: 6px;
+}
+#fb-model-text {
+  font-size: 18px !important;
+  font-weight: 600 !important;
+  color: #ffffff !important;
+  line-height: 1.4 !important;
+  display: block;
+}
+
+/* 다음 문장 버튼: 더 크고 눈에 띄게 */
+.fb-next-btn {
+  background: var(--accent) !important;
+  color: #fff !important;
+  border: none !important;
+  border-radius: 14px !important;
+  padding: 15px 24px !important;
+  font-size: 16px !important;
+  font-weight: 600 !important;
+  width: 100% !important;
+  cursor: pointer !important;
+  margin-top: 10px !important;
+  letter-spacing: 0.3px;
+  transition: background 0.15s, transform 0.1s;
+}
+.fb-next-btn:hover  { background: #6b5fe8 !important; }
+.fb-next-btn:active { transform: scale(0.98); }
+
+/* DB 편집 목록 - 영어 문장 강조 */
+.tbl-item-en {
+  font-size: 12px;
+  color: #5DCAA5;
+  word-break: break-word;
+  line-height: 1.4;
+  margin-top: 2px;
+}
+
+/* 힌트 배지 */
+.hint-badge {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  color: var(--muted);
+  margin-bottom: 14px;
+  letter-spacing: 0.3px;
+}
+
+/* sentence-area 상단 여백 축소 */
+.sentence-area {
+  padding-top: 24px !important;
+}
+
+/* ── DB 편집 아이템 ────────────────────────── */
+
 </style>
 </head>
 <body>
@@ -1304,11 +1421,11 @@ body {
 
       <!-- 한국어 TTS -->
       <button class="ko-tts-btn" id="spkbtn" onclick="speakKo()">
-        🔊 <span>한국어 듣기</span>
+        🔊 <span>다시 듣기</span>
       </button>
 
       <!-- 내 영작 결과 (인라인, 카드 없이) -->
-      <div class="answer-inline" id="atxt">영어로 말해보세요</div>
+      <div class="answer-inline" id="atxt"></div>
 
       <!-- 타이핑 모드 입력 -->
       <div class="type-input-wrap" id="type-row">
@@ -1371,7 +1488,7 @@ body {
 
     <!-- 모범 답안 -->
     <div class="fb-model-ans" id="fbm">
-      <small>모범 답안</small>
+      <small>📢 모범 답안</small>
       <span id="fb-model-text"></span>
     </div>
 
@@ -1391,7 +1508,7 @@ body {
     <div class="ai-result" id="ai-result"></div>
 
     <!-- 다음 문제 버튼 -->
-    <button class="fb-next-btn" onclick="closeFeedback();go(cur+1)">다음 문제 →</button>
+    <button class="fb-next-btn" id="fb-next-btn" onclick="closeFeedback();go(cur+1)">다음 문장 →</button>
   </div>
 
 </div><!-- /#screen-quiz -->
@@ -3667,7 +3784,7 @@ function grade(userAns) {
   const ab = Utils.el('ai-btn'); if (ab) { ab.style.display = !correct ? 'flex' : 'none'; ab.disabled = false; }
 
   // 정답 시 TTS (설정 ON인 경우)
-  if (correct && appSettings.autoEn) speakEn(q[1]);
+  if (correct && appSettings.autoEn) setTimeout(() => speakEn(q[1]), 600);
   // 피드백 영역으로 스크롤
   if (fb) setTimeout(() => fb.scrollIntoView({ behavior:'smooth', block:'nearest' }), 100);
   // 스트릭/XP 갱신
@@ -3972,6 +4089,9 @@ function speakEn(text) {
 
 /* 한국어 TTS 재생 */
 function speakKo() {
+  // 한국어 문장에 재생 pulse 효과
+  const kt = Utils.el('ktxt');
+  if (kt) { kt.classList.add('playing'); setTimeout(() => kt.classList.remove('playing'), 500); }
   const db = getActiveDB();
   const q  = db[viewList[cur] ?? 0];
   if (!q || !window.speechSynthesis) return;
@@ -4251,7 +4371,7 @@ function renderGrid() {
 const SETTINGS_KEY = 'app_settings_v1';
 let appSettings = {
   showKo:        true,   // 한국어 문장 표시 여부
-  autoKo:        false,  // 문제 전환 시 한국어 자동 TTS
+  autoKo:        true,   // 문제 전환 시 한국어 자동 TTS
   autoEn:        true,   // 정답 시 영어 자동 TTS
   showHint:      true,   // 힌트 태그 표시
   showAnsWrong:  true,   // 정답 보기 = 오답 처리
