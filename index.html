@@ -2797,7 +2797,7 @@ const VB = {
     // 미래: "will" → "won't"
     if (/\bwill\b/i.test(s)) return s.replace(/\bwill\b/i, "won't");
 
-    // be동사
+    // be동사 처리
     if (/^I am\b/i.test(s))       return s.replace(/^I am\b/i,       "I'm not");
     if (/^He is\b/i.test(s))      return s.replace(/^He is\b/i,      "He isn't");
     if (/^She is\b/i.test(s))     return s.replace(/^She is\b/i,     "She isn't");
@@ -2811,28 +2811,51 @@ const VB = {
     if (/^They were\b/i.test(s))  return s.replace(/^They were\b/i,  "They weren't");
     if (/^We were\b/i.test(s))    return s.replace(/^We were\b/i,    "We weren't");
 
-    // 과거 시제: 동사 → "didn't + 원형"
+    // ── compromise.js 우선 (대명사 주어 문장에서 가장 정확) ──
+    const hasPronounSubj = /^(I|He|She|We|They|You|It)\b/i.test(s);
+    if (typeof nlp !== 'undefined' && hasPronounSubj) {
+      try {
+        const result = nlp(s).sentences().toNegative().text()
+          .replace(/\bdo not\b/gi, "don't")
+          .replace(/\bdoes not\b/gi, "doesn't")
+          .replace(/\bdid not\b/gi, "didn't")
+          .replace(/\bwill not\b/gi, "won't")
+          .replace(/\bcannot\b/gi, "can't")
+          .replace(/\bis not\b/gi, "isn't")
+          .replace(/\bare not\b/gi, "aren't")
+          .replace(/\bwas not\b/gi, "wasn't")
+          .replace(/\bwere not\b/gi, "weren't");
+        if (result && result !== s && /\b(n't|not)\b/i.test(result)) return result;
+      } catch(e) {}
+    }
+
+    // ── 과거 시제 처리 (대명사·비대명사 주어 모두) ──
     const verb = this.extractVerb(s);
     if (verb && this.isPastTense(verb)) {
       const base = this.toBase(verb);
       return s.replace(new RegExp('\\b' + verb + '\\b', 'i'), "didn't " + base);
     }
 
-    // 3인칭 단수 현재: "He eats" → "He doesn't eat"
+    // ── 대명사 주어 현재형 ──
     const m3 = s.match(/^(He|She|It)\s+(\w+)(.*)/i);
     if (m3) {
       const v    = m3[2].toLowerCase();
       const base = v.replace(/ies$/,'y').replace(/es$/,'').replace(/s$/,'');
       return `${m3[1]} doesn't ${base}${m3[3]}`;
     }
-
-    // 1·2인칭 현재: "I go" → "I don't go"
     const m1 = s.match(/^(I|You|We|They)\s+(\w+)(.*)/i);
     if (m1 && !['am','are','was','were'].includes(m1[2].toLowerCase())) {
       return `${m1[1]} don't ${m1[2].toLowerCase()}${m1[3]}`;
     }
 
-    return "I don't " + s.charAt(0).toLowerCase() + s.slice(1).replace(/\.\s*$/,'') + '.';
+    // ── 비대명사 주어 (동명사구·명사구): 동사 탐지 후 처리 ──
+    if (verb) {
+      const base = verb.replace(/ies$/,'y').replace(/es$/,'').replace(/s$/,'');
+      return s.replace(new RegExp('\\b' + verb + '\\b', 'i'), "doesn't " + base);
+    }
+
+    // 최후 안전망: 원문 반환 (잘못된 변환 방지)
+    return s;
   },
 
   /* ─── 의문문 (makeQuestion) ───
@@ -2858,9 +2881,10 @@ const VB = {
     if (/^She was\b/i.test(s))   return 'Was she ' + s.replace(/^She was\s*/i, '')   + '?';
     if (/^They were\b/i.test(s)) return 'Were they '+ s.replace(/^They were\s*/i,'') + '?';
 
-    // 과거 시제: "I went" → "Did you go?"
+    // 과거 시제: "I went" → "Did you go?" (대명사 주어만)
     const verb = this.extractVerb(s);
-    if (verb && this.isPastTense(verb)) {
+    const hasPrSubj = /^(I|He|She|We|They|You|It)\b/i.test(s);
+    if (verb && this.isPastTense(verb) && hasPrSubj) {
       const base    = this.toBase(verb);
       const subjM   = s.match(/^(I|He|She|We|They|You)\b/i);
       const subj    = subjM ? subjM[1] : 'you';
@@ -2883,7 +2907,26 @@ const VB = {
       return `Do you ${m1[1].toLowerCase()}${m1[2]}?`;
     }
 
-    return 'Do you ' + s.charAt(0).toLowerCase() + s.slice(1) + '?';
+    // ── 비대명사 주어 (동명사구·명사구) ──
+    if (verb && this.isPastTense(verb)) {
+      const base = this.toBase(verb);
+      const rest = s.replace(new RegExp('\\b' + verb + '\\b', 'i'), base);
+      return 'Did ' + rest.charAt(0).toLowerCase() + rest.slice(1) + '?';
+    }
+    if (verb) {
+      const base = verb.replace(/ies$/,'y').replace(/es$/,'').replace(/s$/,'');
+      const rest = s.replace(new RegExp('\\b' + verb + '\\b', 'i'), base);
+      return 'Does ' + rest.charAt(0).toLowerCase() + rest.slice(1) + '?';
+    }
+
+    // ── compromise.js 폴백 ──
+    if (typeof nlp !== 'undefined') {
+      try {
+        const q = nlp(s).sentences().toQuestion().text();
+        if (q && q !== s) return q;
+      } catch(e) {}
+    }
+    return s + '?';
   },
 
   /* ─── 시제 변환 (changeTense) ─── */
@@ -2975,6 +3018,30 @@ const VB = {
   },
 
   /* ─── 통합 변환 (buildVariations) ─── */
+  /* 동사 타입별 Yes/No 답변 생성 */
+  _getYesNo(sentence) {
+    const hasFuture = /\bwill\b/i.test(sentence);
+    const hasBe     = /^(I am|He is|She is|It is|We are|They are|You are|I was|He was|She was|We were|They were)\b/i.test(sentence);
+    const subjM     = sentence.match(/^(I|He|She|We|They|You)\b/i);
+    const subj      = subjM ? subjM[1].toLowerCase() : 'it';
+
+    if (hasFuture) {
+      const S = subj === 'i' ? 'I' : subj.charAt(0).toUpperCase() + subj.slice(1);
+      return { yes: `Yes, ${S} will.`, no: `No, ${S} won't.` };
+    }
+    if (hasBe) {
+      if (subj === 'i')                        return { yes:'Yes, I am.',        no:"No, I'm not." };
+      if (['he','she','it'].includes(subj))    return { yes:`Yes, ${subj} is.`,  no:`No, ${subj} isn't.` };
+      return { yes:`Yes, ${subj} are.`, no:`No, ${subj} aren't.` };
+    }
+    // 일반 동사
+    if (subj === 'i')                          return { yes:'Yes, I do.',         no:"No, I don't." };
+    if (['he','she','it'].includes(subj))      return { yes:`Yes, ${subj} does.`, no:`No, ${subj} doesn't.` };
+    if (subj === 'we')                         return { yes:'Yes, we do.',        no:"No, we don't." };
+    if (subj === 'you')                        return { yes:'Yes, you do.',       no:"No, you don't." };
+    return { yes:'Yes, they do.', no:"No, they don't." };
+  },
+
   buildVariations(en, ko, type) {
     const rows = [];
     try {
@@ -2992,8 +3059,9 @@ const VB = {
           ko: ko.replace(/한다\.$|있다\.$|간다\.$/, m => m.replace(/다\.$/, '나요?')),
           en: q });
 
-        rows.push({ badge:'긍정 답', cls:'vr-pos', ko:'네, 그래요.', en:"Yes, I do.  /  Yes, I am." });
-        rows.push({ badge:'부정 답', cls:'vr-neg', ko:'아니요, 아니에요.', en:"No, I don't.  /  No, I'm not." });
+        const yn = this._getYesNo(en);
+        rows.push({ badge:'긍정 답', cls:'vr-pos', ko:'네, 그래요.',        en: yn.yes });
+        rows.push({ badge:'부정 답', cls:'vr-neg', ko:'아니요, 아니에요.', en: yn.no });
 
       } else if (type === 'tense') {
         /* 현재 → 과거 → 미래 → 진행 → 과거부정 */

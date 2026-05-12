@@ -5,6 +5,44 @@
 
 ---
 
+## [1.3.0] — 2026-05-12
+
+### 추가 (Added)
+- 🧠 **compromise.js 통합** (영어 NLP 라이브러리)
+  - CDN: `https://cdn.jsdelivr.net/npm/compromise/builds/compromise.min.js`
+  - 대명사 주어(I/He/She/We/They/You) 문장에서 문법적으로 정확한 변환
+  - spaCy의 JS 브라우저 등가물 — Python 불필요
+- 🔄 **비대명사 주어 부정문·의문문 수정**
+  - 동명사 주어: ~~"I don't losing..."~~ → **"Losing X didn't make Y."** ✅
+  - 명사구 주어: ~~"Do you running..."~~ → **"Does running X keep Y?"** ✅
+  - `_negateNonPronoun()` / `_questionNonPronoun()` 로직 추가
+- ✅ **Yes/No 답변 동사 타입별 단일 출력**
+  - be동사: ~~"Yes, I do. / Yes, I am."~~ → **"Yes, I am."** 만 출력 ✅
+  - 미래형: → **"Yes, I will."** ✅
+  - 3인칭: → **"Yes, he does."** ✅
+  - `_getYesNo()` 도우미 함수 추가
+
+### 라이브러리 비교 (spaCy vs compromise.js)
+
+| 라이브러리 | 언어 | 브라우저 | 부정문 | 의문문 | 복잡주어 |
+|-----------|------|---------|-------|-------|---------|
+| spaCy + pyInflect | Python | ❌ | ✅ | ✅ | ✅ |
+| mlconjug3 | Python | ❌ | ✅ | ❌ | ❌ |
+| **compromise.js** | **JS** | **✅** | **✅** | **✅** | ⚠️ 자체 보완 |
+| 기존 VB 코드 | JS | ✅ | △ | △ | ❌ |
+
+→ **결론**: compromise.js(브라우저 호환) + 비대명사 주어 자체 처리 조합 채택
+
+### 수정 (Fixed)
+- `makeNegative()` 비대명사 주어 폴백 오류
+  - ~~"I don't losing his business made him..."~~ → **"Losing his business didn't make him..."** ✅
+- `makeQuestion()` 비대명사 주어 폴백 오류
+  - ~~"Do you running every day..."~~ → **"Does running every day keep me healthy?"** ✅
+- `makeQuestion()` 과거 분기를 대명사 주어 한정으로 수정 (비대명사 주어 오인식 방지)
+
+### 테스트
+- 변형 전수 테스트 22/22 통과
+
 ## [1.2.0] — 2026-05-11
 
 ### 추가 (Added)
