@@ -5,81 +5,7 @@
 
 ---
 
-## [1.7.0] — 2026-05-13
-
-### 핵심 교육 흐름 개선 (Language Education Expert + UX Designer 관점)
-
-**목표**: 한국어 듣자마자 → 영어가 연상 → 바로 입으로 나오게
-
-#### 교육 흐름 변경
-- 🔊 **한국어 자동재생 기본값 ON** (`autoKo: false → true`)
-  - 문장 전환 시 300ms 후 자동 재생
-  - "눈으로 읽고 번역" → "귀로 듣고 연상" 학습 패턴으로 전환
-  - iOS 사용자 제스처 이후부터 정상 작동
-- 🎯 **모범 발음 공통재생** (정답/오답 관계없이)
-  - 이전: 정답 시만 영어 TTS 재생
-  - 개선: 정답/오답 모두 600ms 후 모범 발음 자동재생
-  - 오답 학습에서도 올바른 발음 귀에 박히게
-
-#### UI 개선
-- "한국어 듣기" → "🔊 다시 듣기" (액션 명확화)
-- "영어로 말해보세요" 불필요한 힌트 텍스트 제거
-- 모범 답안 텍스트 크기 확대 (18px, bold)
-- "다음 문제 →" → "다음 문장 →" + 스타일 강화
-- **스페이스바 단축키**: 피드백 열려있을 때 다음 문장으로
-- 한국어 재생 시 pulse 애니메이션
-
-#### DB 편집 개선
-- 영어 문장 전체 표시 (ellipsis 제거, word-break 적용)
-- 영어 문장 민트색(#5DCAA5)으로 강조
-
-## [1.6.0] — 2026-05-13
-
-### 추가 (Added)
-- 🧠 **VAR_DB — 500문장 변형 사전 생성 DB**
-  - Claude가 직접 500문장 × pnq 변형 일괄 생성
-  - 긍정 씨앗 398개: 부정문/의문문/한국어 사전 계산
-  - 부정 씨앗 102개: 긍정형/의문문/한국어 사전 계산
-  - `buildVariations('pnq')` 호출 시 VAR_DB 우선 참조
-  - VAR_DB 미존재 시 규칙 기반 VB 코드로 fallback
-  - 145KB 데이터 → 즉시 응답 (API 호출 없음)
-- 📄 **CLAUDE.md 추가**
-  - Andrej Karpathy 코딩 가이드라인 통합
-  - 프로젝트 아키텍처 문서화
-  - 개발 규칙 (버전 관리, localStorage 키 등)
-
-### 개선 (Improved)
-- 복잡 주어 부정/의문문 정확도 대폭 향상
-  - "My nephew has" → "My nephew doesn't have" / "Does my nephew have?" ✅
-  - "Running usually makes" → "doesn't make" / "Does...make?" ✅
-  - "Losing his business made" → "didn't make" / "Did...make?" ✅
-- Yes/No 답변 과거형 수정: "Yes, it does." → "Yes, it did." (과거 문장)
-- 부정 씨앗 의문문: 의문문 형태 수정 "These pants don't?" → "Do these pants have?" ✅
-- 종속절 can 처리: "I don't think we can" → Yes: "Yes, I do." (not "Yes, I can.") ✅
-
-## [1.5.0] — 2026-05-13
-
-### 수정 (Fixed)
-- 🔄 **부정 씨앗 문장 변형 완성**
-  - [긍정형] 씨앗이 부정이면 긍정으로 변환
-    - ~~"I don't think..."~~ → **"I think we can get a place in Gangnam."** ✅
-    - 한국어: "집 못 얻을 듯해." → "집 얻을 듯해." ✅
-  - [부정] 씨앗이 이미 부정이면 완전히 제거 (중복 방지)
-  - [의문문] 부정 의문문 형태 `makeNegativeQuestion()` 신규 추가
-    - ~~"Do you don't think...?"~~ → **"Don't you think...?"** ✅
-    - "She doesn't like it." → **"Doesn't she like it?"** ✅
-    - "He didn't go." → **"Didn't he go?"** ✅
-    - "I won't go." → **"Won't you go?"** ✅
-  - 한국어 의문문: 원문 + "?" ✅
-
-### 추가 (Added)
-- `makeNegativeQuestion(s)` — 부정 의문문 전용 함수
-- `_koPos(ko)` — 부정 한국어 → 긍정 근사 변환 (못→제거, 없다→있다 등)
-
-### 테스트 결과
-- pnq 전수 테스트: 7/7 통과
-
-## [1.4.0] — 2026-05-13
+## [1.4.0] — 2026-05-12
 
 ### 수정 (Fixed)
 - 🔄 **변형연습 pnq 전면 재설계**
@@ -106,7 +32,7 @@
 - VB 전수 테스트: 10/10 통과
 - JS 문법: ✅
 
-## [1.3.0] — 2026-05-13
+## [1.3.0] — 2026-05-12
 
 ### 추가 (Added)
 - 🧠 **compromise.js 통합** (영어 NLP 라이브러리)
