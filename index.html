@@ -4082,6 +4082,15 @@ let appSettings = {
   showAnsWrong:  true,   // 정답보기=오답 처리
 };
 
+
+/* ── 핵심 상수 ───────────────────── */
+const POS_KEY      = 'last_position_v1';
+const SETTINGS_KEY = 'app_settings_v1';
+const SRS_KEY      = 'srs_v2';
+const GOALS_KEY    = 'study_goals_v2';
+const CUSTOM_KEY   = 'custom_db';
+
+
 let selectedVoiceName = localStorage.getItem('voice_name') || '';
 let selectedKoVoiceName = localStorage.getItem('voice_ko_name') || '__auto__';
 let selectedVoiceIdx  = 0; // 하위호환용 (사용 최소화)
