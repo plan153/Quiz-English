@@ -2,7 +2,7 @@
 <html lang="ko">
 <!--
   ============================================================
-  기본동사 영작퀴즈 (English Verb Quiz) — Version: v1.10.0
+  기본동사 영작퀴즈 (English Verb Quiz) — Version: v1.10.1
   ============================================================
   목적:
     한국어 문장을 보고 영어로 말하는 연습을 돕는 PWA 앱.
@@ -2185,12 +2185,20 @@ body {
   </div>
 </div>
 
-<script>
+<script>/* ── Storage 키 상수 ────────────────────── */
+const POS_KEY      = 'last_position_v1';
+const SETTINGS_KEY = 'app_settings_v1';
+const SRS_KEY      = 'srs_v2';
+const GOALS_KEY    = 'study_goals_v2';
+const CUSTOM_KEY   = 'custom_db';
+
+
 /* ============================================================
    📌 RAW 데이터 — 500문장 DB
    형식: [한국어문장, 영어정답, 힌트(동사·카테고리)]
    Day 1~100, 동사당 5문장씩 구성
    ============================================================ */
+
 const RAW = [
   /* Day 1 HAVE 소유/관계 */
   ["내 조카는 거북이를 키운다.","My nephew has a turtle.","HAVE · 소유/관계"],
@@ -4083,12 +4091,7 @@ let appSettings = {
 };
 
 
-/* ── 핵심 상수 ───────────────────── */
-const POS_KEY      = 'last_position_v1';
-const SETTINGS_KEY = 'app_settings_v1';
-const SRS_KEY      = 'srs_v2';
-const GOALS_KEY    = 'study_goals_v2';
-const CUSTOM_KEY   = 'custom_db';
+
 
 
 let selectedVoiceName = localStorage.getItem('voice_name') || '';
