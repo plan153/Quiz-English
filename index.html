@@ -2,7 +2,7 @@
 <html lang="ko">
 <!--
   ============================================================
-  기본동사 영작퀴즈 (English Verb Quiz) — Version: v1.9.0
+  기본동사 영작퀴즈 (English Verb Quiz) — Version: v1.10.0
   ============================================================
   목적:
     한국어 문장을 보고 영어로 말하는 연습을 돕는 PWA 앱.
@@ -3710,7 +3710,7 @@ function render() {
   const kt = Utils.el('ktxt'); if (kt) kt.textContent = q[0] || '';
   // 영작 입력 초기화
   const at = Utils.el('atxt');
-  if (at) { at.innerHTML = '마이크 버튼을 눌러 영어로 말하세요'; at.className = 'atxt ph'; }
+  if (at) { at.innerHTML = ''; at.className = 'atxt'; }
   // 피드백 숨기기
   const fb = Utils.el('fb'); if (fb) fb.style.display = 'none';
   const si = Utils.el('srs-info'); if (si) si.style.display = 'none';
@@ -3828,6 +3828,16 @@ function setQuizLevel(lv) {
    1) 정답 판별 → 2) diff 하이라이트 → 3) SRS 기록
    4) XP 부여 → 5) 피드백 카드 표시 → 6) 세션 체크
    ============================================================ */
+
+/* 피드백 슬라이드업 시트 열기/닫기 */
+function openFeedback() {
+  const fb = Utils.el('fb');
+  if (fb) fb.classList.add('open');
+}
+function closeFeedback() {
+  const fb = Utils.el('fb');
+  if (fb) fb.classList.remove('open');
+}
 function grade(userAns) {
   const db  = getActiveDB();
   const idx = viewList[cur] ?? 0;
@@ -4064,6 +4074,14 @@ let speechVoices    = [];  // 사용 가능한 TTS 음성 목록
    ============================================================ */
 
 /* 선택된 음성 이름 (인덱스 대신 이름으로 관리) */
+let appSettings = {
+  showKo:        true,   // 한국어 문장 표시
+  autoKo:        true,   // 한국어 자동 TTS ← 교육 핵심
+  autoEn:        true,   // 모범발음 자동 TTS
+  showHint:      true,   // 힌트 표시
+  showAnsWrong:  true,   // 정답보기=오답 처리
+};
+
 let selectedVoiceName = localStorage.getItem('voice_name') || '';
 let selectedKoVoiceName = localStorage.getItem('voice_ko_name') || '__auto__';
 let selectedVoiceIdx  = 0; // 하위호환용 (사용 최소화)
@@ -4462,6 +4480,515 @@ function renderVoiceList() {
   if (cl) cl.textContent = `영어 ${enAll.length}개 · 한국어 ${koAll.length}개`;
 }
 
+
+
+/* ══ 복원된 핵심 함수들 ══ */
+
+function applyDB() {
+  SrsSystem.load(); buildViewList(); render();
+}
+
+/* 설정 적용 — UI 갱신 */
+function applySettings() {
+  // 토글 체크박스 동기화
+  const ids = {
+    'set-show-ko':       appSettings.showKo,
+    'set-auto-ko':       appSettings.autoKo,
+    'set-auto-en':       appSettings.autoEn,
+    'set-show-hint':     appSettings.showHint,
+    'set-showans-wrong': appSettings.showAnsWrong,
+  };
+  Object.entries(ids).forEach(([id, val]) => {
+    const el = Utils.el(id); if (el) el.checked = val;
+  });
+  // 현재 문제 화면에 즉시 반영
+  const kcard  = Utils.qs('.kcard');
+  const htag   = Utils.qs('.htag');
+  if (kcard) kcard.style.display = appSettings.showKo ? '' : 'none';
+  if (htag)  htag.style.display  = appSettings.showHint ? '' : 'none';
+}
+
+function cancelEntry()    { closeEditModal(); }
+
+function cancelUpload() {
+  _uploadPreview = null;
+  const pv = Utils.el('upload-preview'); if (pv) pv.style.display='none';
+  const fi = Utils.el('file-input'); if (fi) fi.value='';
+}
+
+function closeDB() { const dp = Utils.el('db-panel-overlay'); if (dp) dp.classList.remove('open'); }
+
+function closePanel() { const p = Utils.el('panel-overlay'); if (p) p.classList.remove('open'); }
+
+function closePwa() {
+  const po = Utils.el('pwa-overlay'); if (po) po.style.display='none';
+  localStorage.setItem('pwa_dismissed', '1');
+}
+
+function closeSettings() {
+  const so = Utils.el('settings-overlay');
+  if (so) so.classList.remove('open');
+}
+
+function confirmUpload() {
+  if (!_uploadPreview) return;
+  customDB = _uploadPreview; localStorage.setItem(DB_KEY, JSON.stringify(customDB));
+  dbSource = 'custom'; localStorage.setItem(SRC_KEY, 'custom');
+  applyDB(); renderDBSourceTab(); switchDBTab('source');
+  _uploadPreview = null;
+  alert(`✅ ${customDB.length}문장이 등록되었습니다.`);
+}
+
+function deleteEntry(i) {
+  if (!confirm('이 문장을 삭제할까요?')) return;
+  // 내장 DB 삭제 시 커스텀 복사본에서 삭제
+  if (dbSource === 'builtin') {
+    if (!confirm('내장 DB의 문장을 삭제하면 커스텀 DB로 복사됩니다. 계속하시겠어요?')) return;
+  }
+  let db = customDB ? [...customDB] : [...RAW];
+  db.splice(i, 1);
+  customDB = db;
+  localStorage.setItem(DB_KEY, JSON.stringify(customDB));
+  if (dbSource !== 'custom') { dbSource = 'custom'; localStorage.setItem(SRC_KEY, 'custom'); }
+  applyDB(); renderTable();
+}
+
+function dismissNotif() {
+  const nb = Utils.el('notif-banner'); if (nb) nb.style.display = 'none';
+  localStorage.setItem('notif_dismissed', '1');
+}
+
+function downloadCurrentDB() {
+  const db  = getActiveDB();
+  const csv = db.map(r => r.map(c=>`"${c}"`).join(',')).join('\n');
+  const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href=url; a.download=`영작퀴즈_DB_${Utils.today()}.csv`;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+function downloadTemplate() {
+  const csv = '한국어,영어,힌트\n반려동물 키우시나요?,Do you have any pets?,HAVE · 소유\n저는 스테이크 먹을게요.,I\'ll have the steak please.,HAVE · 식사';
+  const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href=url; a.download='영작퀴즈_템플릿.csv';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+/* 타이핑 입력 채점 */
+function gradeTyped(text) {
+  const at = Utils.el('atxt');
+  if (at) { at.className = 'atxt'; at.textContent = text; }
+  grade(text);
+}
+
+function handleFile(file) {
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    const lines  = e.target.result.split('\n').filter(l => l.trim());
+    const parsed = lines.map(l => {
+      const c = l.split(',');
+      return [(c[0]||'').trim(), (c[1]||'').trim(), (c[2]||'커스텀').trim()];
+    }).filter(r => r[0] && r[1]);
+    if (!parsed.length) { alert('유효한 데이터가 없습니다.'); return; }
+    _uploadPreview = parsed;
+    const pv  = Utils.el('upload-preview');
+    const pvt = Utils.el('upload-preview-title');
+    const pvl = Utils.el('upload-preview-list');
+    if (pvt) pvt.textContent = `✅ ${parsed.length}문장 인식됨`;
+    if (pvl) pvl.innerHTML = parsed.slice(0,5).map(r =>
+      `<div style="font-size:12px;padding:5px 0;border-bottom:1px solid var(--border)"><span style="color:var(--muted)">${r[0]}</span> → <b>${r[1]}</b></div>`
+    ).join('') + (parsed.length>5 ? `<div style="font-size:11px;color:var(--muted);margin-top:4px">...외 ${parsed.length-5}개</div>`:'');
+    if (pv) pv.style.display = '';
+  };
+  reader.readAsText(file, 'UTF-8');
+}
+
+function initNotif() {
+  const nb = Utils.el('notif-banner'); if (!nb) return;
+  if (localStorage.getItem('notif_dismissed')) { nb.style.display='none'; return; }
+  if (typeof Notification!=='undefined' && Notification.permission==='granted') {
+    registerSW().then(() => scheduleToday());
+    nb.style.display = 'none'; return;
+  }
+  setTimeout(() => { nb.style.display = 'block'; }, 3000);
+}
+
+/* 저장된 위치 불러오기 */
+function loadPosition() {
+  try { return JSON.parse(localStorage.getItem(POS_KEY) || 'null'); }
+  catch(e) { return null; }
+}
+
+/* 설정 로드 (앱 시작 시 호출) */
+function loadSettings() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(SETTINGS_KEY) || 'null');
+    if (saved) appSettings = { ...appSettings, ...saved };
+  } catch(e) {}
+  applySettings();
+}
+
+function opToggleRec(idx)   { OpicMode.toggleRec(idx); }
+
+function openDB() {
+  renderDBSourceTab(); renderDBStats();
+  const dp = Utils.el('db-panel-overlay'); if (dp) dp.classList.add('open');
+  switchDBTab('source');
+}
+
+function openEditModal(idx) {
+  _editingIdx = idx;
+  const modal = Utils.el('edit-modal'); if (!modal) return;
+  const title = Utils.el('edit-modal-title');
+  if (idx >= 0) {
+    const r = getActiveDB()[idx]||[];
+    const ek = Utils.el('edit-ko'); if (ek) ek.value = r[0]||'';
+    const ee = Utils.el('edit-en'); if (ee) ee.value = r[1]||'';
+    const eh = Utils.el('edit-hint'); if (eh) eh.value = r[2]||'';
+    if (title) title.textContent = '문장 편집';
+  } else {
+    ['edit-ko','edit-en','edit-hint'].forEach(id=>{ const e=Utils.el(id); if(e) e.value=''; });
+    if (title) title.textContent = '문장 추가';
+  }
+  modal.style.display = 'flex';
+}
+
+function openPanel()  { renderGrid(); const p = Utils.el('panel-overlay'); if (p) p.classList.add('open'); }
+
+function openSettings() {
+  const so = Utils.el('settings-overlay');
+  if (so) so.classList.add('open');
+}
+
+function renderDBSourceTab() {
+  const hasCustom = customDB && customDB.length > 0;
+  const sc = Utils.el('src-custom');
+  if (sc) sc.style.display = hasCustom ? '' : 'none';
+  const scc = Utils.el('src-custom-count');
+  if (scc) scc.textContent = hasCustom ? customDB.length + '문장' : '0문장';
+  const sbc = Utils.el('src-builtin-count');
+  if (sbc) sbc.textContent = RAW.length + '문장 · HAVE/GET/MAKE 등 100동사';
+  const sb = Utils.el('src-builtin');
+  if (sb) sb.classList.toggle('active', dbSource==='builtin' || !hasCustom);
+  if (sc) sc.classList.toggle('active', dbSource==='custom' && hasCustom);
+}
+
+function renderDBStats() {
+  const el = Utils.el('db-stats-view'); if (!el) return;
+  const db  = getActiveDB();
+  const allS = Object.values(srsData);
+  const answered = allS.filter(s => s.totalAnswers > 0).length;
+  const correct  = allS.filter(s => s.correct > 0 && s.wrong === 0).length;
+  const due      = viewList.filter(i => SrsSystem.isDue(i)).length;
+  el.innerHTML = `총 문장: ${db.length}개<br>학습 완료: ${answered}개<br>완전 정답: ${correct}개<br>오늘 복습: ${due}개<br>누적 XP: ${Progress.getXP()}<br>연속 학습: ${Progress.getStreak().days}일`;
+}
+
+function renderGrid() {
+  const g = Utils.el('ngrid'); if (!g) return;
+  g.innerHTML = '';
+  viewList.forEach((idx, pos) => {
+    const s = SrsSystem.getItem(idx);
+    const b = document.createElement('button');
+    let cls = 'gcell';
+    if (pos === cur)                          cls += ' cur';
+    else if (s.totalAnswers>0 && s.wrong===0) cls += ' ok';
+    else if (s.totalAnswers>0 && s.wrong>0)   cls += ' ng';
+    else if (SrsSystem.isDue(idx))            cls += ' due';
+    b.className = cls;
+    b.textContent = idx + 1;
+    b.onclick = (p => () => { cur = p; render(); closePanel(); })(pos);
+    g.appendChild(b);
+  });
+  const db = getActiveDB();
+  const answered = Object.keys(srsData).filter(k => srsData[k].totalAnswers > 0).length;
+  const pt = Utils.el('ptitle');
+  if (pt) pt.textContent = `문제 목록 (${viewList.length}개 · 완료 ${answered}/${db.length})`;
+}
+
+/* 편집 탭: 문장 검색 + 테이블 렌더 */
+function renderTable() {
+  const db     = getActiveDB();
+  const search = (Utils.el('tbl-search')?.value||'').toLowerCase();
+  const listEl = Utils.el('tbl-list');
+  const stat   = Utils.el('tbl-stats');
+  if (!listEl) return;
+  const filtered = db.map((r,i)=>({r,i})).filter(({r}) =>
+    !search || r[0].includes(search) || r[1].toLowerCase().includes(search));
+  if (stat) stat.textContent = `총 ${db.length}문장 / 표시 ${filtered.length}개`;
+  listEl.innerHTML = filtered.map(({r, i}) => {
+    const s  = SrsSystem.getItem(i);
+    const wb = wrongBadge(s.wrong);
+    return `
+    <div style="display:flex;align-items:center;gap:8px;padding:10px 12px;background:var(--card);border:1px solid var(--border);border-radius:11px;margin-bottom:6px">
+      <span style="font-size:10px;color:var(--muted);width:28px;flex-shrink:0">${i+1}</span>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:13px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${r[0]}</div>
+        <div style="font-size:12px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${r[1]}</div>
+      </div>
+      ${wb}
+      <div style="display:flex;gap:5px;flex-shrink:0">
+        <button onclick="openEditModal(${i})" style="font-size:11px;padding:4px 9px;border-radius:7px;background:var(--adim);color:var(--accent);border:1px solid rgba(123,110,246,.3);cursor:pointer;font-family:inherit">편집</button>
+        <button onclick="deleteEntry(${i})"  style="font-size:11px;padding:4px 9px;border-radius:7px;background:rgba(240,92,110,.1);color:var(--ng);border:1px solid rgba(240,92,110,.2);cursor:pointer;font-family:inherit">삭제</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function run() {
+  // 1. SRS 데이터 로드 (학습 이력 복원)
+  SrsSystem.load();
+  // 2. 학습목표 로드
+  GoalManager.load();
+  // 3. 설정 로드 (한국어 보기/듣기 등)
+  loadSettings();
+  // 3. 음성 설정 복원
+  selectedVoiceIdx = parseInt(localStorage.getItem('voice_idx') || '0');
+  ttsRate = parseFloat(localStorage.getItem('tts_rate') || '0.9');
+  // 4. 문장 목록 빌드 + 첫 문제 렌더
+  buildViewList();
+  render();
+  // 5. 알림 초기화
+  initNotif();
+  // 6. PWA 안내 표시 (iOS Safari)
+  showPwaPrompt();
+  // 7. TTS 음성 목록 로드
+  initVoices();
+  // 8. 스트릭/XP 표시
+  Progress.render();
+  // 9. 시작 화면 결정
+  const hasHistory = Object.keys(JSON.parse(localStorage.getItem(SrsSystem.KEY)||'{}')).length > 0;
+  const isFirstVisit = !localStorage.getItem('onboarded_v1');
+  if (isFirstVisit) {
+    // 첫 방문 → 온보딩
+    const ob = Utils.el('ob-overlay'); if (ob) ob.classList.add('open');
+  } else if (hasHistory) {
+    // 재방문 + 학습이력 있음 → 환영 화면
+    showWelcome();
+  }
+  // 10. TTS 웜업 (iOS에서 첫 발화 지연 방지)
+  setTimeout(() => {
+    if (window.speechSynthesis) {
+      const u = new SpeechSynthesisUtterance('');
+      speechSynthesis.speak(u); speechSynthesis.cancel();
+    }
+  }, 500);
+}
+
+function saveEntry()      { saveEdit(); }
+
+/* 현재 위치 저장 (문제 이동할 때마다 호출) */
+function savePosition() {
+  const db  = getActiveDB();
+  const idx = viewList[cur] ?? 0;
+  const data = {
+    rawIdx:   idx,          // 실제 DB 인덱스
+    curPos:   cur,          // viewList 내 위치
+    tab:      curTab,       // 탭 (all/due/wrong)
+    level:    quizLevel,    // 레벨 필터
+    date:     Utils.today(),
+  };
+  localStorage.setItem(POS_KEY, JSON.stringify(data));
+}
+
+/* 설정 저장 (각 토글 변경 시 호출) */
+function saveSettings() {
+  appSettings.showKo       = Utils.el('set-show-ko')?.checked ?? true;
+  appSettings.autoKo       = Utils.el('set-auto-ko')?.checked ?? false;
+  appSettings.autoEn       = Utils.el('set-auto-en')?.checked ?? true;
+  appSettings.showHint     = Utils.el('set-show-hint')?.checked ?? true;
+  appSettings.showAnsWrong = Utils.el('set-showans-wrong')?.checked ?? true;
+  localStorage.setItem(SETTINGS_KEY, JSON.stringify(appSettings));
+  applySettings();
+}
+
+function saveVoice() {
+  localStorage.setItem('voice_idx', selectedVoiceIdx);
+  localStorage.setItem('tts_rate', ttsRate);
+  closeVoicePanel();
+}
+
+function sbNextSeed()    { SBMode.nextSeed(); }
+
+function sbUnlockStep()  { SBMode.unlockStep(); }
+
+function scheduleToday() {
+  const key = 'notif_sched_' + Utils.today();
+  if (localStorage.getItem(key) || !swReg?.active) return;
+  localStorage.setItem(key, '1');
+  const now   = new Date();
+  const slots = [{h:9,m:0},{h:13,m:0},{h:19,m:0},{h:10,m:30},{h:14,m:30},{h:20,m:30}];
+  const future = Utils.shuffle(slots.filter(s => s.h*60+s.m > now.getHours()*60+now.getMinutes())).slice(0,3);
+  const times  = future.map(s => {
+    const t = new Date(); t.setHours(s.h, s.m, 0, 0);
+    return { delay: t - now, msg: NOTIF_MSGS[Math.floor(Math.random()*NOTIF_MSGS.length)] };
+  });
+  swReg.active.postMessage({ type:'SCHEDULE_NOTIFICATIONS', times });
+}
+
+/* HTML onclick 연결용 전역 래퍼 */
+function selectOpCat(cat)   { OpicMode.setCat(cat); }
+
+/* HTML onclick 연결용 전역 래퍼 */
+function selectSbMode(m) { SBMode.setMode(m); }
+
+function selectSource(src) {
+  if (src==='builtin') {
+    dbSource = 'builtin'; localStorage.setItem(SRC_KEY, 'builtin');
+  } else {
+    if (!customDB||customDB.length===0) { alert('커스텀 DB가 없습니다. 먼저 CSV를 업로드하세요.'); return; }
+    dbSource = 'custom'; localStorage.setItem(SRC_KEY, 'custom');
+  }
+  applyDB(); renderDBSourceTab();
+}
+
+/* HTML onclick 연결용 전역 래퍼 */
+function selectVarType(t) { VarMode.setType(t); }
+
+function selectVoice(i) {
+  selectedVoiceIdx = i; renderVoiceList();
+  const db = getActiveDB();
+  speakEn(db[viewList[cur] ?? 0]?.[1] || 'Hello, this is a test.');
+}
+
+function showPwaPrompt() {
+  const isIos        = /iphone|ipad|ipod/i.test(navigator.userAgent);
+  const isSafari     = /safari/i.test(navigator.userAgent) && !/chrome|crios|fxios/i.test(navigator.userAgent);
+  const isStandalone = window.navigator.standalone === true;
+  const count        = parseInt(localStorage.getItem('pwa_visit') || '0');
+  localStorage.setItem('pwa_visit', count + 1);
+  if (isIos && isSafari && !isStandalone && !localStorage.getItem('pwa_dismissed') && count < 3) {
+    setTimeout(() => { const po = Utils.el('pwa-overlay'); if (po) po.style.display='flex'; }, 2000);
+  }
+}
+
+function showWelcome() {
+  SrsSystem.load(); // 데이터 먼저 로드
+
+  const allS     = Object.values(srsData);
+  const answered = allS.filter(s => s.totalAnswers > 0).length;
+  const dueItems = Object.keys(srsData).filter(k => SrsSystem.isDue(parseInt(k)));
+  const correct  = allS.filter(s => s.correct > 0).length;
+  const wrong    = allS.filter(s => s.wrong   > 0).length;
+  const accuracy = (correct + wrong) > 0
+    ? Math.round(correct / (correct + wrong) * 100) : 0;
+
+  // 통계 표시
+  const wsa = Utils.el('ws-answered'); if (wsa) wsa.textContent = answered;
+  const wsd = Utils.el('ws-due');      if (wsd) wsd.textContent = dueItems.length;
+  const wac = Utils.el('ws-accuracy'); if (wac) wac.textContent = accuracy + '%';
+
+  // 스트릭 표시
+  const streak = Progress.getStreak();
+  const ws = Utils.el('welcome-streak');
+  if (ws) ws.textContent = streak.days > 0 ? `🔥 ${streak.days}일 연속 학습 중!` : '';
+
+  // 이어하기 버튼에 마지막 위치 정보 표시
+  const pos = loadPosition();
+  const rp  = Utils.el('welcome-resume-pos');
+  if (rp && pos) {
+    const db = getActiveDB();
+    const q  = db[pos.rawIdx];
+    rp.textContent = q ? `— ${pos.rawIdx + 1}번 (${q[2]?.split('·')[0].trim() || ''})` : '';
+  }
+
+  // 복습 건수 표시
+  const dc = Utils.el('welcome-due-count');
+  if (dc) dc.textContent = dueItems.length > 0 ? `(${dueItems.length}개)` : '';
+
+  // 서브 텍스트
+  const sub = Utils.el('welcome-sub');
+  if (sub) {
+    if (dueItems.length > 0) sub.textContent = `오늘 복습할 문장 ${dueItems.length}개가 있어요!`;
+    else if (answered > 0)   sub.textContent = `${answered}문장 완료! 계속 이어가볼까요?`;
+    else                      sub.textContent = '처음 방문이시군요. 바로 시작해볼까요?';
+  }
+
+  // 이어하기 버튼 비활성화 (저장 위치 없으면)
+  const resumeBtn = Utils.qs('.wbtn-resume');
+  if (resumeBtn && !pos) { resumeBtn.style.opacity = '0.4'; resumeBtn.style.pointerEvents = 'none'; }
+
+  Utils.el('welcome-overlay')?.classList.add('open');
+}
+
+function stopPlaylist() { ShadowMode.stopPlaylist(); }
+
+function switchMode(mode) {
+  ['quiz','var','sb','opic','shadow'].forEach(m => {
+    const scr = Utils.el('screen-' + m);
+    const btn = Utils.el('mb-' + m);
+    if (scr) scr.classList.toggle('active', m === mode);
+    if (btn) btn.classList.toggle('active', m === mode);
+  });
+  if (mode === 'quiz')   render();
+  if (mode === 'var')    VarMode.init();
+  if (mode === 'sb')     SBMode.init();
+  if (mode === 'opic')   OpicMode.init();
+  if (mode === 'shadow') ShadowMode.init();
+}
+
+function toggleOpCard(idx)  { OpicMode.toggleCard(idx); }
+
+function toggleTypeMode() {
+  typeModeOn = !typeModeOn;
+  const row = Utils.el('type-row');
+  const btn = Utils.el('type-toggle-btn');
+  const inp = Utils.el('type-input');
+  if (row) row.style.display = typeModeOn ? 'block' : 'none';
+  if (btn) btn.textContent = typeModeOn ? '🎙 음성으로 입력' : '⌨️ 타이핑으로 입력';
+  if (btn) btn.style.color = typeModeOn ? 'var(--accent)' : 'var(--muted)';
+  if (typeModeOn && inp) { inp.focus(); }
+}
+
+function varGo(dir)        { VarMode.go(dir); }
+
+function varRevealAll()    { VarMode.revealAll(); }
+
+/* 환영 화면 선택 처리 */
+function welcomeAction(action) {
+  Utils.el('welcome-overlay')?.classList.remove('open');
+
+  if (action === 'resume') {
+    /* 이어하기: 마지막 위치 복원 */
+    const pos = loadPosition();
+    if (pos) {
+      // 탭/레벨 복원
+      if (pos.tab)   { curTab = pos.tab; ['all','due','wrong'].forEach(t => { const el = Utils.el('tab-'+t); if (el) el.classList.toggle('active', t===pos.tab); }); }
+      if (pos.level) { quizLevel = pos.level; setQuizLevel(pos.level); }
+      buildViewList();
+      // 마지막 위치로 이동 (rawIdx로 viewList 내 위치 탐색)
+      const idx = viewList.indexOf(pos.rawIdx);
+      cur = idx >= 0 ? idx : Math.min(pos.curPos, viewList.length - 1);
+    }
+    render();
+
+  } else if (action === 'review') {
+    /* 핵심 복습: 오늘 복습 탭으로 전환 */
+    switchTab('due');
+    go(0);
+
+  } else {
+    /* 처음부터: 전체 탭, 0번 */
+    curTab = 'all'; quizLevel = 'all';
+    setQuizLevel('all');
+    switchTab('all');
+    go(0);
+  }
+}
+
+function wrongBadge(wrongCount) {
+  if (wrongCount === 0)      return '<span class="wrong-badge wb-safe">🟢 완벽</span>';
+  if (wrongCount <= 4)       return `<span class="wrong-badge wb-safe">🟢 ${wrongCount}회</span>`;
+  if (wrongCount <= 9)       return `<span class="wrong-badge wb-caution">🟡 ${wrongCount}회</span>`;
+  if (wrongCount <= 14)      return `<span class="wrong-badge wb-warning">🟠 ${wrongCount}회</span>`;
+  return                            `<span class="wrong-badge wb-danger">🔴 ${wrongCount}회</span>`;
+}
+
 /* ═══════════════════════════════════════════════════════════════
    DB 편집 탭 — 레벨별 분류 + 연속읽기
    ═══════════════════════════════════════════════════════════════ */
@@ -4671,6 +5198,23 @@ function _deleteEntry(idx) {
 }
 
 /* ═══════════════════════════════════════════════════════════════ */
+
+function selectKoVoice(name) {
+  selectedKoVoiceName = name;
+  document.querySelectorAll('.ko-voice-item').forEach(el => {
+    const sel = el.dataset.name === name;
+    el.style.borderColor = sel ? 'var(--accent)' : 'var(--border)';
+    const chk = el.querySelector('.vchk');
+    if (chk) chk.style.display = sel ? '' : 'none';
+  });
+  // 미리 듣기
+  const v = window.speechSynthesis?.getVoices().find(v => v.name === name);
+  const u = new SpeechSynthesisUtterance('안녕하세요. 반갑습니다.');
+  u.lang = 'ko-KR'; u.rate = ttsRate;
+  if (v) u.voice = v;
+  speechSynthesis.cancel();
+  speechSynthesis.speak(u);
+}
 </script>
 </body>
 </html>
