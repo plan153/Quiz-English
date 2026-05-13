@@ -3652,6 +3652,7 @@ let srsData    = {};       // SRS 복습 데이터 (문장인덱스 → {interva
 let cur        = 0;        // 현재 보고 있는 문제 위치 (viewList 내 인덱스)
 let viewList   = [];       // 현재 탭/레벨 필터가 적용된 문장 인덱스 목록
 let curTab     = 'all';    // 현재 선택된 탭 ('all'|'due'|'wrong')
+let curLevel    = 'all';  // 레벨 필터 (all/L1/L2/L3/L4)
 let quizLevel  = 'all';    // 현재 선택된 레벨 ('all'|'L1'|'L2'|'L3'|'L4')
 let sessionOk  = 0;        // 이번 세션 누적 정답 수
 let sessionNg  = 0;        // 이번 세션 누적 오답 수
